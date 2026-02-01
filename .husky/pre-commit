@@ -1,0 +1,5 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run lint-staged and a full typecheck. Typecheck is expensive but ensures nothing slips in.
+npx lint-staged && npm run typecheck || exit 1
