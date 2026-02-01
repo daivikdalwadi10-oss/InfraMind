@@ -1,0 +1,30 @@
+name: Notify CI Failure
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types:
+      - completed
+
+jobs:
+  notify:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create GitHub issue about CI failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const title = `CI failure: ${run.name} (${run.head_branch})`;
+            const body = `Workflow **${run.name}** failed on branch **${run.head_branch}**\n\nCheck details: ${run.html_url}`;
+            await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body });
+      - name: Notify Slack (if configured)
+        if: secrets.SLACK_WEBHOOK != ''
+        run: |
+          title="CI Failure: ${{ github.event.workflow_run.name }}"
+          branch="${{ github.event.workflow_run.head_branch }}"
+          url="${{ github.event.workflow_run.html_url }}"
+          text="${title} on branch *${branch}*\n\n<${url}|Click to view run details>"
+          payload=$(jq -n --arg text "$text" '{text: $text}')
+          curl -sS -X POST -H 'Content-Type: application/json' --data "$payload" ${{ secrets.SLACK_WEBHOOK }}
