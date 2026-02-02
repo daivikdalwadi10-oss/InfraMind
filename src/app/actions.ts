@@ -97,6 +97,15 @@ export async function suggestHypothesesForAnalysis(employeeUid: string, analysis
   return analysis.hypotheses;
 }
 
+export async function suggestHypothesesAction(form: FormData | { analysisId?: string; employeeUid?: string }) {
+  const get = (k: string) => getValue(form as FormLike, k);
+  const employeeUid = String(get('employeeUid') ?? '');
+  const analysisId = String(get('analysisId') ?? '');
+  if (!employeeUid || !analysisId) throw new Error('employeeUid and analysisId required');
+  await suggestHypothesesForAnalysis(employeeUid, analysisId);
+  return;
+}
+
 export async function submitAnalysis(employeeUid: string, analysisId: string) {
   await assertHasRole(employeeUid, 'employee');
   const snap = await adminFirestore.collection('analyses').doc(analysisId).get();
@@ -191,6 +200,15 @@ export async function finalizeReport(managerUid: string, reportId: string) {
   await adminFirestore.collection('reports').doc(reportId).update({ status: 'FINALIZED', updatedAt: now, statusHistory: admin.firestore.FieldValue.arrayUnion(statusEntry) });
 
   return { success: true };
+}
+
+export async function getFinalizedReportForOwner(ownerUid: string, reportId: string) {
+  await assertHasRole(ownerUid, 'owner');
+  const snap = await adminFirestore.collection('reports').doc(reportId).get();
+  if (!snap.exists) throw new Error('Report not found');
+  const report = snap.data() as Report;
+  if (report.status !== 'FINALIZED') throw new Error('Report is not finalized');
+  return { id: snap.id, ...report };
 }
 export async function finalizeReportAction(form: FormData | { managerUid?: string; reportId?: string }) {
   const get = (k: string) => getValue(form as FormLike, k);
