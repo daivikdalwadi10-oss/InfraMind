@@ -30,6 +30,7 @@
     "@firebase/rules-unit-testing": "^5.0.0",
     "@types/node-fetch": "^2.6.13",
     "@types/react": "19.2.10",
+    "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.0.0",
     "eslint": "^9.0.0",
     "eslint-config-next": "^16.1.6",

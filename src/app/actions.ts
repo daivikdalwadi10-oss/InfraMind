@@ -1,3 +1,5 @@
+'use server';
+
 import admin from 'firebase-admin';
 import { adminFirestore } from '@/src/firebase/admin';
 import { assertHasRole } from '@/src/lib/auth';
@@ -8,6 +10,9 @@ import { draftExecutiveSummary } from '@/src/ai/flows/draftExecutiveSummary';
 // Helper types for Form-like inputs
 type FormLike = FormData | Record<string, unknown>;
 const getValue = (form: FormLike, k: string) => (form instanceof FormData ? form.get(k) : (form as Record<string, unknown>)[k]);
+
+export type ActionResult = { ok: boolean; message: string };
+const toErrorMessage = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
 // Server-side actions for workflow enforcement. All functions MUST be called server-side and re-validate permissions.
 
@@ -262,4 +267,59 @@ export async function finalizeReportAction(form: FormData | { managerUid?: strin
   if (!managerUid || !reportId) throw new Error('managerUid and reportId required');
   await finalizeReport(managerUid, reportId);
   return;
+}
+
+// UI-friendly wrappers (return ActionResult for client forms)
+export async function createTaskForm(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    await createTaskAction(formData);
+    return { ok: true, message: 'Task created.' };
+  } catch (err) {
+    return { ok: false, message: toErrorMessage(err) };
+  }
+}
+
+export async function startAnalysisForm(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    await startAnalysisAction(formData);
+    return { ok: true, message: 'Analysis started.' };
+  } catch (err) {
+    return { ok: false, message: toErrorMessage(err) };
+  }
+}
+
+export async function suggestHypothesesForm(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    await suggestHypothesesAction(formData);
+    return { ok: true, message: 'Hypotheses suggested.' };
+  } catch (err) {
+    return { ok: false, message: toErrorMessage(err) };
+  }
+}
+
+export async function submitAnalysisForm(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    await submitAnalysisAction(formData);
+    return { ok: true, message: 'Analysis submitted.' };
+  } catch (err) {
+    return { ok: false, message: toErrorMessage(err) };
+  }
+}
+
+export async function managerReviewForm(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    await managerReviewAction(formData);
+    return { ok: true, message: 'Review submitted.' };
+  } catch (err) {
+    return { ok: false, message: toErrorMessage(err) };
+  }
+}
+
+export async function finalizeReportForm(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+  try {
+    await finalizeReportAction(formData);
+    return { ok: true, message: 'Report finalized.' };
+  } catch (err) {
+    return { ok: false, message: toErrorMessage(err) };
+  }
 }
