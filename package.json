@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "npx eslint --ext .ts,.tsx src --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:unit": "vitest src/ai/flows --run",
