@@ -32,14 +32,14 @@ export async function createTask(managerUid: string, payload: { title: string; d
   return { id: ref.id, ...task };
 }
 
-export async function listTasksForManager(managerUid: string) {
+export async function listTasksForManager(managerUid: string, options?: { status?: Task['status']; limit?: number }) {
   await assertHasRole(managerUid, 'manager');
-  const snap = await adminFirestore
-    .collection('tasks')
-    .where('creator', '==', managerUid)
-    .orderBy('createdAt', 'desc')
-    .limit(20)
-    .get();
+  let query: FirebaseFirestore.Query = adminFirestore.collection('tasks').where('creator', '==', managerUid);
+  if (options?.status) {
+    query = query.where('status', '==', options.status);
+  }
+  const limit = Math.max(1, Math.min(50, options?.limit ?? 20));
+  const snap = await query.orderBy('createdAt', 'desc').limit(limit).get();
   return snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Task) }));
 }
 
@@ -80,14 +80,14 @@ export async function startAnalysis(employeeUid: string, taskId: string) {
   return { id: ref.id, ...analysis };
 }
 
-export async function listAnalysesForEmployee(employeeUid: string) {
+export async function listAnalysesForEmployee(employeeUid: string, options?: { status?: Analysis['status']; limit?: number }) {
   await assertHasRole(employeeUid, 'employee');
-  const snap = await adminFirestore
-    .collection('analyses')
-    .where('author', '==', employeeUid)
-    .orderBy('updatedAt', 'desc')
-    .limit(20)
-    .get();
+  let query: FirebaseFirestore.Query = adminFirestore.collection('analyses').where('author', '==', employeeUid);
+  if (options?.status) {
+    query = query.where('status', '==', options.status);
+  }
+  const limit = Math.max(1, Math.min(50, options?.limit ?? 20));
+  const snap = await query.orderBy('updatedAt', 'desc').limit(limit).get();
   return snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Analysis) }));
 }
 
@@ -197,14 +197,14 @@ export async function managerReviewAnalysis(managerUid: string, analysisId: stri
   return { success: true };
 }
 
-export async function listReportsForManager(managerUid: string) {
+export async function listReportsForManager(managerUid: string, options?: { status?: Report['status']; limit?: number }) {
   await assertHasRole(managerUid, 'manager');
-  const snap = await adminFirestore
-    .collection('reports')
-    .where('author', '==', managerUid)
-    .orderBy('updatedAt', 'desc')
-    .limit(20)
-    .get();
+  let query: FirebaseFirestore.Query = adminFirestore.collection('reports').where('author', '==', managerUid);
+  if (options?.status) {
+    query = query.where('status', '==', options.status);
+  }
+  const limit = Math.max(1, Math.min(50, options?.limit ?? 20));
+  const snap = await query.orderBy('updatedAt', 'desc').limit(limit).get();
   return snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Report) }));
 }
 
@@ -244,13 +244,14 @@ export async function getFinalizedReportForOwner(ownerUid: string, reportId: str
   return { id: snap.id, ...report };
 }
 
-export async function listFinalizedReportsForOwner(ownerUid: string) {
+export async function listFinalizedReportsForOwner(ownerUid: string, options?: { limit?: number }) {
   await assertHasRole(ownerUid, 'owner');
+  const limit = Math.max(1, Math.min(50, options?.limit ?? 20));
   const snap = await adminFirestore
     .collection('reports')
     .where('status', '==', 'FINALIZED')
     .orderBy('updatedAt', 'desc')
-    .limit(20)
+    .limit(limit)
     .get();
   return snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Report) }));
 }
