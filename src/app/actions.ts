@@ -32,6 +32,17 @@ export async function createTask(managerUid: string, payload: { title: string; d
   return { id: ref.id, ...task };
 }
 
+export async function listTasksForManager(managerUid: string) {
+  await assertHasRole(managerUid, 'manager');
+  const snap = await adminFirestore
+    .collection('tasks')
+    .where('creator', '==', managerUid)
+    .orderBy('createdAt', 'desc')
+    .limit(20)
+    .get();
+  return snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Task) }));
+}
+
 // Form-compatible wrappers for Server Action forms. These wrappers accept FormData (or plain params) and are intended to be used directly from forms
 export async function createTaskAction(form: FormData | { title?: string; description?: string; assignee?: string; managerUid?: string }) {
   // Support both FormData (from <form action={createTaskAction}>) and plain object (tests)
@@ -67,6 +78,17 @@ export async function startAnalysis(employeeUid: string, taskId: string) {
 
   const ref = await adminFirestore.collection('analyses').add(analysis);
   return { id: ref.id, ...analysis };
+}
+
+export async function listAnalysesForEmployee(employeeUid: string) {
+  await assertHasRole(employeeUid, 'employee');
+  const snap = await adminFirestore
+    .collection('analyses')
+    .where('author', '==', employeeUid)
+    .orderBy('updatedAt', 'desc')
+    .limit(20)
+    .get();
+  return snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Analysis) }));
 }
 
 export async function startAnalysisAction(form: FormData | { taskId?: string; employeeUid?: string }) {
@@ -175,6 +197,17 @@ export async function managerReviewAnalysis(managerUid: string, analysisId: stri
   return { success: true };
 }
 
+export async function listReportsForManager(managerUid: string) {
+  await assertHasRole(managerUid, 'manager');
+  const snap = await adminFirestore
+    .collection('reports')
+    .where('author', '==', managerUid)
+    .orderBy('updatedAt', 'desc')
+    .limit(20)
+    .get();
+  return snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Report) }));
+}
+
 export async function managerReviewAction(form: FormData | { managerUid?: string; analysisId?: string; type?: string; note?: string }) {
   const get = (k: string) => getValue(form as FormLike, k);
   const managerUid = String(get('managerUid') ?? '');
@@ -209,6 +242,17 @@ export async function getFinalizedReportForOwner(ownerUid: string, reportId: str
   const report = snap.data() as Report;
   if (report.status !== 'FINALIZED') throw new Error('Report is not finalized');
   return { id: snap.id, ...report };
+}
+
+export async function listFinalizedReportsForOwner(ownerUid: string) {
+  await assertHasRole(ownerUid, 'owner');
+  const snap = await adminFirestore
+    .collection('reports')
+    .where('status', '==', 'FINALIZED')
+    .orderBy('updatedAt', 'desc')
+    .limit(20)
+    .get();
+  return snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Report) }));
 }
 export async function finalizeReportAction(form: FormData | { managerUid?: string; reportId?: string }) {
   const get = (k: string) => getValue(form as FormLike, k);

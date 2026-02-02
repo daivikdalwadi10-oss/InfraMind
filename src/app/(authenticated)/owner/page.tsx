@@ -1,5 +1,5 @@
 import React from 'react';
-import { getFinalizedReportForOwner } from '@/src/app/actions';
+import { getFinalizedReportForOwner, listFinalizedReportsForOwner } from '@/src/app/actions';
 
 type OwnerPageProps = {
   searchParams?: { ownerUid?: string; reportId?: string };
@@ -9,11 +9,20 @@ export default async function OwnerPage({ searchParams }: OwnerPageProps) {
   const ownerUid = searchParams?.ownerUid ?? '';
   const reportId = searchParams?.reportId ?? '';
   let report: Awaited<ReturnType<typeof getFinalizedReportForOwner>> | null = null;
+  let reports: Awaited<ReturnType<typeof listFinalizedReportsForOwner>> = [];
   let error: string | null = null;
 
   if (ownerUid && reportId) {
     try {
       report = await getFinalizedReportForOwner(ownerUid, reportId);
+    } catch (err) {
+      error = String(err);
+    }
+  }
+
+  if (ownerUid) {
+    try {
+      reports = await listFinalizedReportsForOwner(ownerUid);
     } catch (err) {
       error = String(err);
     }
@@ -47,6 +56,36 @@ export default async function OwnerPage({ searchParams }: OwnerPageProps) {
             <p className="mt-1 text-sm text-slate-700">
               {report.executiveSummaryDraft?.text ?? 'No summary available.'}
             </p>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-lg border bg-white p-4">
+        <h2 className="font-medium">Finalized Reports (Recent)</h2>
+        {reports.length === 0 && !error && (
+          <p className="mt-3 text-sm text-slate-600">No finalized reports found.</p>
+        )}
+
+        {reports.length > 0 && (
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-slate-500">
+                  <th className="py-2">Report ID</th>
+                  <th className="py-2">Task</th>
+                  <th className="py-2">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reports.map((item) => (
+                  <tr key={item.id} className="border-t">
+                    <td className="py-2 text-slate-700">{item.id}</td>
+                    <td className="py-2 text-slate-700">{item.taskId}</td>
+                    <td className="py-2 text-slate-700">{item.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </section>
