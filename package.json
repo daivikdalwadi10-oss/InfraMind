@@ -1,0 +1,53 @@
+{
+  "name": "inframind",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "prepare": "husky install",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:unit": "vitest src/ai/flows --run",
+    "test:unit:coverage": "vitest src/ai/flows --run --coverage",
+    "test:integration": "vitest src/app/__tests__/actions.integration.test.ts --run",
+    "test:ci": "npm run test:unit && npm run test:integration",
+    "coverage": "vitest --run --coverage"
+  },
+  "dependencies": {
+    "@radix-ui/react-dropdown-menu": "^2.0.0",
+    "firebase": "^12.8.0",
+    "firebase-admin": "^12.7.0",
+    "lucide-react": "^0.200.0",
+    "next": "^16.1.6",
+    "node-fetch": "^2.7.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.0",
+    "@types/node-fetch": "^2.6.13",
+    "@types/react": "19.2.10",
+    "autoprefixer": "^10.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "^16.1.6",
+    "husky": "^8.0.0",
+    "lint-staged": "^16.2.7",
+    "postcss": "^8.0.0",
+    "prettier": "^2.0.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.18"
+  },
+  "overrides": {
+    "fast-xml-parser": "^5.3.4"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "npx eslint --ext .ts,.tsx src --fix",
+      "git add"
+    ]
+  }
+}
