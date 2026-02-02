@@ -58,8 +58,16 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
     function hasRole(role) {
-      return request.auth.token.role == role || (request.auth.token.roles != null && request.auth.token.roles[role] == true);
+      return request.auth != null && (
+        (request.auth.token["role"] != null && request.auth.token["role"] == role) ||
+        (request.auth.token["roles"] != null && request.auth.token["roles"][role] == true) ||
+        (getUserRole() == role)
+      );
     }
   }
 }
