@@ -19,16 +19,24 @@ jobs:
             const title = `CI failure: ${run.name} (${run.head_branch})`;
             const body = `Workflow **${run.name}** failed on branch **${run.head_branch}**\n\nCheck details: ${run.html_url}`;
             await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body });
-      - name: Notify Slack (if configured)
+      - name: Send Slack notification
         if: always()
         continue-on-error: true
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "CI Failure: ${{ github.event.workflow_run.name }} on branch ${{ github.event.workflow_run.head_branch }}",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*CI Failure* on branch `${{ github.event.workflow_run.head_branch }}`\n<${{ github.event.workflow_run.html_url }}|View details>"
+                  }
+                }
+              ]
+            }
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        run: |
-          if [ -z "$SLACK_WEBHOOK" ]; then exit 0; fi
-          title="CI Failure: ${{ github.event.workflow_run.name }}"
-          branch="${{ github.event.workflow_run.head_branch }}"
-          url="${{ github.event.workflow_run.html_url }}"
-          text="${title} on branch *${branch}*\n\n<${url}|Click to view run details>"
-          payload=$(jq -n --arg text "$text" '{text: $text}')
-          curl -sS -X POST -H 'Content-Type: application/json' --data "$payload" "$SLACK_WEBHOOK"
+          # SLACK_WEBHOOK_URL is optional - action handles gracefully if not provided
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
