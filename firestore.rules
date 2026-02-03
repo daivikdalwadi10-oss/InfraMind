@@ -4,54 +4,59 @@ service cloud.firestore {
 
     // User profiles
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || hasRole("manager") || hasRole("owner"));
-      allow create: if request.auth.uid == userId;
-      allow update: if request.auth.uid == userId;
-      allow delete: if false; // never delete
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && request.auth.uid == userId && request.resource.data.role == resource.data.role;
+      allow delete: if false;
     }
 
     // Tasks
     match /tasks/{taskId} {
-      allow create: if isSignedIn() && hasRole("manager");
-      allow read: if isSignedIn() && (hasRole("manager") || hasRole("owner") || resource.data.assignee == request.auth.uid || resource.data.creator == request.auth.uid);
-      allow update: if isSignedIn() && (
-        // Manager can update tasks
-        hasRole("manager")
+      allow create: if isSignedIn() && hasRole("MANAGER") && request.resource.data.createdBy == request.auth.uid;
+      allow read: if isSignedIn() && (
+        (hasRole("MANAGER") && resource.data.createdBy == request.auth.uid) ||
+        (hasRole("EMPLOYEE") && resource.data.assignedTo == request.auth.uid)
       );
+      allow update: if isSignedIn() && hasRole("MANAGER") && resource.data.createdBy == request.auth.uid && request.resource.data.createdBy == resource.data.createdBy;
       allow delete: if false;
     }
 
     // Analyses
     match /analyses/{analysisId} {
-      allow create: if isSignedIn() && hasRole("employee") && request.resource.data.author == request.auth.uid && request.resource.data.status == "DRAFT";
+      allow create: if isSignedIn() && hasRole("EMPLOYEE") && request.resource.data.employeeId == request.auth.uid && request.resource.data.status == "DRAFT";
 
-      // Employees can update their own analysis only when status == DRAFT
-      allow update: if isSignedIn() && hasRole("employee") && resource.data.author == request.auth.uid && resource.data.status == "DRAFT";
+      // Employees can update only content while DRAFT or NEEDS_CHANGES
+      allow update: if isSignedIn() && hasRole("EMPLOYEE") && resource.data.employeeId == request.auth.uid &&
+        (resource.data.status == "DRAFT" || resource.data.status == "NEEDS_CHANGES") &&
+        request.resource.data.status == resource.data.status &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "symptoms",
+          "signals",
+          "hypotheses",
+          "readinessScore",
+          "updatedAt",
+          "revisionCount"
+        ]);
 
-      // Managers can read and act on submitted analyses
-      allow read: if isSignedIn() && (hasRole("manager") || (resource.data.author == request.auth.uid && !(hasRole("owner"))));
+      // Managers can read all analyses
+      allow read: if isSignedIn() && (hasRole("MANAGER") || resource.data.employeeId == request.auth.uid);
 
-      // Owners cannot read raw analyses
-      allow read: if false && hasRole("owner");
-
-      // Managers can update status when review
-      allow write: if isSignedIn() && hasRole("manager");
+      // Managers can update status + feedback
+      allow update: if isSignedIn() && hasRole("MANAGER") && resource.data.status == "SUBMITTED" &&
+        (request.resource.data.status == "APPROVED" || request.resource.data.status == "NEEDS_CHANGES") &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "status",
+          "managerFeedback",
+          "updatedAt",
+          "statusHistory"
+        ]);
     }
 
     // Reports
     match /reports/{reportId} {
-      // Only managers can create/draft reports
-      allow create: if isSignedIn() && hasRole("manager");
-
-      // Managers can always read; Owners can read only FINALIZED reports; authors can read their own
-      allow read: if isSignedIn() && (
-        hasRole("manager") ||
-        (hasRole("owner") && resource.data.status == 'FINALIZED') ||
-        resource.data.author == request.auth.uid
-      );
-
-      // Managers can update (finalize)
-      allow update: if isSignedIn() && hasRole("manager");
+      allow create: if isSignedIn() && hasRole("MANAGER") && request.resource.data.createdBy == request.auth.uid;
+      allow read: if isSignedIn() && (hasRole("OWNER") || (hasRole("MANAGER") && resource.data.createdBy == request.auth.uid));
+      allow update: if false;
     }
 
     function isSignedIn() {
@@ -65,7 +70,6 @@ service cloud.firestore {
     function hasRole(role) {
       return request.auth != null && (
         (request.auth.token["role"] != null && request.auth.token["role"] == role) ||
-        (request.auth.token["roles"] != null && request.auth.token["roles"][role] == true) ||
         (getUserRole() == role)
       );
     }

@@ -1,11 +1,8 @@
 'use server';
 
-import admin from 'firebase-admin';
-import { adminFirestore } from '@/src/firebase/admin';
-import { assertHasRole } from '@/src/lib/auth';
-import { Task, Analysis, Report, StatusHistoryEntry } from '@/src/lib/types';
-import { suggestHypotheses } from '@/src/ai/flows/suggestHypotheses';
-import { draftExecutiveSummary } from '@/src/ai/flows/draftExecutiveSummary';
+import { callPhpApi } from '@/src/lib/api';
+import { assertHasRole, createSessionCookie, clearSessionCookie, requireSessionUser, SessionUser } from '@/src/lib/auth';
+import { Analysis, Role, Task } from '@/src/lib/types';
 
 // Helper types for Form-like inputs
 type FormLike = FormData | Record<string, unknown>;
@@ -14,259 +11,299 @@ const getValue = (form: FormLike, k: string) => (form instanceof FormData ? form
 export type ActionResult = { ok: boolean; message: string };
 const toErrorMessage = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
-// Server-side actions for workflow enforcement. All functions MUST be called server-side and re-validate permissions.
+// Session management (login/logout)
 
-export async function createTask(managerUid: string, payload: { title: string; description: string; assignee?: string }) {
-  await assertHasRole(managerUid, 'manager');
+export async function createSessionAction(form: FormData | { email?: string; password?: string }) {
+  const get = (k: string) => getValue(form as FormLike, k);
+  const email = String(get('email') ?? '');
+  const password = String(get('password') ?? '');
 
-  const now = Date.now();
-  const task: Task = {
-    title: payload.title,
-    description: payload.description,
-    creator: managerUid,
-    assignee: payload.assignee,
-    status: payload.assignee ? 'ASSIGNED' : 'OPEN',
-    createdAt: now,
-    updatedAt: now,
-    statusHistory: [
-      { status: payload.assignee ? 'ASSIGNED' : 'OPEN', changedAt: now, changedBy: managerUid } as StatusHistoryEntry,
-    ],
+  if (!email || !password) throw new Error('email and password required');
+
+  const response = await callPhpApi('POST', '/auth/login', { email, password });
+  if (!response.success) throw new Error(response.error || 'Login failed');
+
+  const data = response.data as { user: { id: string; email: string; name: string; role: Role }; tokens: { accessToken: string; refreshToken: string } };
+  const sessionUser: SessionUser = {
+    uid: data.user.id,
+    email: data.user.email,
+    name: data.user.name,
+    role: data.user.role,
   };
 
-  const ref = await adminFirestore.collection('tasks').add(task);
-  return { id: ref.id, ...task };
+  await createSessionCookie(sessionUser);
+  return sessionUser;
 }
 
-export async function listTasksForManager(managerUid: string, options?: { status?: Task['status']; limit?: number }) {
-  await assertHasRole(managerUid, 'manager');
-  let query: FirebaseFirestore.Query = adminFirestore.collection('tasks').where('creator', '==', managerUid);
-  if (options?.status) {
-    query = query.where('status', '==', options.status);
-  }
-  const limit = Math.max(1, Math.min(50, options?.limit ?? 20));
-  const snap = await query.orderBy('createdAt', 'desc').limit(limit).get();
-  return snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Task) }));
-}
-
-// Form-compatible wrappers for Server Action forms. These wrappers accept FormData (or plain params) and are intended to be used directly from forms
-export async function createTaskAction(form: FormData | { title?: string; description?: string; assignee?: string; managerUid?: string }) {
-  // Support both FormData (from <form action={createTaskAction}>) and plain object (tests)
+export async function signupAction(form: FormData | { email?: string; password?: string; name?: string; role?: Role }) {
   const get = (k: string) => getValue(form as FormLike, k);
-  const managerUid = String(get('managerUid') ?? get('manager') ?? '');
-  if (!managerUid) throw new Error('managerUid required in form');
-  const payload = { title: String(get('title') ?? ''), description: String(get('description') ?? ''), assignee: String(get('assignee') ?? undefined) };
-  await createTask(managerUid, payload);
+  const email = String(get('email') ?? '');
+  const password = String(get('password') ?? '');
+  const name = String(get('name') ?? '');
+  const role = (String(get('role') ?? '').toUpperCase() as Role) || 'EMPLOYEE';
+
+  if (!email || !password || !name) throw new Error('email, password, and name required');
+
+  const response = await callPhpApi('POST', '/auth/signup', { email, password, name, role });
+  if (!response.success) throw new Error(response.error || 'Signup failed');
+
+  const data = response.data as { user: { id: string; email: string; name: string; role: Role }; tokens: { accessToken: string; refreshToken: string } };
+  const sessionUser: SessionUser = {
+    uid: data.user.id,
+    email: data.user.email,
+    name: data.user.name,
+    role: data.user.role,
+  };
+
+  await createSessionCookie(sessionUser);
+  return sessionUser;
+}
+
+export async function logoutAction() {
+  await clearSessionCookie();
   return;
 }
-export async function startAnalysis(employeeUid: string, taskId: string) {
-  await assertHasRole(employeeUid, 'employee');
 
-  // Verify task assignment
-  const taskSnap = await adminFirestore.collection('tasks').doc(taskId).get();
-  if (!taskSnap.exists) throw new Error('Task not found');
-  const task = taskSnap.data() as Task;
-  if (task.assignee && task.assignee !== employeeUid) throw new Error('Task not assigned to this user');
-
-  const now = Date.now();
-  const analysis: Analysis = {
-    taskId,
-    author: employeeUid,
-    symptoms: [],
-    signals: [],
-    hypotheses: [],
-    readinessScore: 0,
-    status: 'DRAFT',
-    createdAt: now,
-    updatedAt: now,
-    statusHistory: [{ status: 'DRAFT', changedAt: now, changedBy: employeeUid }],
-  };
-
-  const ref = await adminFirestore.collection('analyses').add(analysis);
-  return { id: ref.id, ...analysis };
+export async function getCurrentUserProfile() {
+  const session = await requireSessionUser();
+  return session;
 }
 
-export async function listAnalysesForEmployee(employeeUid: string, options?: { status?: Analysis['status']; limit?: number }) {
-  await assertHasRole(employeeUid, 'employee');
-  let query: FirebaseFirestore.Query = adminFirestore.collection('analyses').where('author', '==', employeeUid);
-  if (options?.status) {
-    query = query.where('status', '==', options.status);
-  }
-  const limit = Math.max(1, Math.min(50, options?.limit ?? 20));
-  const snap = await query.orderBy('updatedAt', 'desc').limit(limit).get();
-  return snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Analysis) }));
+// Task management
+
+export async function createTask(payload: { title: string; description: string; assignedTo?: string }) {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'MANAGER');
+
+  const response = await callPhpApi('POST', '/tasks', { title: payload.title, description: payload.description, assignedTo: payload.assignedTo });
+  if (!response.success) throw new Error(response.error || 'Failed to create task');
+
+  return response.data;
 }
 
-export async function startAnalysisAction(form: FormData | { taskId?: string; employeeUid?: string }) {
+export async function listTasksForManager(options?: { status?: Task['status']; limit?: number }) {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'MANAGER');
+
+  const endpoint = `/tasks?${new URLSearchParams({ limit: String(options?.limit ?? 20) }).toString()}`;
+  const response = await callPhpApi('GET', endpoint);
+  if (!response.success) throw new Error(response.error || 'Failed to fetch tasks');
+
+  return response.data ?? [];
+}
+
+export async function createTaskAction(form: FormData | { title?: string; description?: string; assignedTo?: string }) {
   const get = (k: string) => getValue(form as FormLike, k);
-  const employeeUid = String(get('employeeUid') ?? '');
+  const payload = {
+    title: String(get('title') ?? ''),
+    description: String(get('description') ?? ''),
+    assignedTo: String(get('assignedTo') ?? get('assignee') ?? '') || undefined,
+  };
+  if (!payload.title.trim()) throw new Error('title required');
+  if (!payload.description.trim()) throw new Error('description required');
+  await createTask(payload);
+  return;
+}
+
+// Analysis management
+
+export async function startAnalysis(taskId: string, analysisType: Analysis['analysisType']) {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'EMPLOYEE');
+
+  const response = await callPhpApi('POST', '/analyses', { taskId, analysisType });
+  if (!response.success) throw new Error(response.error || 'Failed to create analysis');
+
+  return response.data;
+}
+
+export async function listAnalysesForEmployee(options?: { status?: Analysis['status']; limit?: number }) {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'EMPLOYEE');
+
+  const endpoint = `/analyses?${new URLSearchParams({ limit: String(options?.limit ?? 20) }).toString()}`;
+  const response = await callPhpApi('GET', endpoint);
+  if (!response.success) throw new Error(response.error || 'Failed to fetch analyses');
+
+  return response.data ?? [];
+}
+
+export async function listTasksForEmployee(options?: { status?: Task['status']; limit?: number }) {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'EMPLOYEE');
+
+  const endpoint = `/tasks?${new URLSearchParams({ limit: String(options?.limit ?? 20) }).toString()}`;
+  const response = await callPhpApi('GET', endpoint);
+  if (!response.success) throw new Error(response.error || 'Failed to fetch tasks');
+
+  return response.data ?? [];
+}
+
+export async function startAnalysisAction(form: FormData | { taskId?: string; analysisType?: Analysis['analysisType'] }) {
+  const get = (k: string) => getValue(form as FormLike, k);
   const taskId = String(get('taskId') ?? '');
-  if (!employeeUid || !taskId) throw new Error('employeeUid and taskId required');
-  await startAnalysis(employeeUid, taskId);
+  const analysisType = String(get('analysisType') ?? '') as Analysis['analysisType'];
+  if (!taskId || !analysisType) throw new Error('taskId and analysisType required');
+  await startAnalysis(taskId, analysisType);
   return;
 }
-export async function suggestHypothesesForAnalysis(employeeUid: string, analysisId: string) {
-  await assertHasRole(employeeUid, 'employee');
 
-  const snap = await adminFirestore.collection('analyses').doc(analysisId).get();
-  if (!snap.exists) throw new Error('Analysis not found');
-  const analysis = snap.data() as Analysis;
-  if (analysis.author !== employeeUid) throw new Error('Not the author');
-  if (analysis.status !== 'DRAFT') throw new Error('Can only suggest hypotheses while DRAFT');
+export async function suggestHypothesesForAnalysis(analysisId: string) {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'EMPLOYEE');
 
-  const hypotheses = await suggestHypotheses({ taskTitle: analysis.taskId, symptoms: analysis.symptoms, signals: analysis.signals });
+  const response = await callPhpApi('POST', `/analyses/${analysisId}/suggest-hypotheses`, {});
+  if (!response.success) throw new Error(response.error || 'Failed to suggest hypotheses');
 
-  // merge selected hypotheses
-  analysis.hypotheses = hypotheses.map((h) => ({ text: h.text, confidence: h.confidence }));
-  analysis.updatedAt = Date.now();
-
-  await adminFirestore.collection('analyses').doc(analysisId).update({ hypotheses: analysis.hypotheses, updatedAt: analysis.updatedAt });
-
-  return analysis.hypotheses;
+  return response.data;
 }
 
-export async function suggestHypothesesAction(form: FormData | { analysisId?: string; employeeUid?: string }) {
+export async function suggestHypothesesAction(form: FormData | { analysisId?: string }) {
   const get = (k: string) => getValue(form as FormLike, k);
-  const employeeUid = String(get('employeeUid') ?? '');
   const analysisId = String(get('analysisId') ?? '');
-  if (!employeeUid || !analysisId) throw new Error('employeeUid and analysisId required');
-  await suggestHypothesesForAnalysis(employeeUid, analysisId);
+  if (!analysisId) throw new Error('analysisId required');
+  await suggestHypothesesForAnalysis(analysisId);
   return;
 }
 
-export async function submitAnalysis(employeeUid: string, analysisId: string) {
-  await assertHasRole(employeeUid, 'employee');
-  const snap = await adminFirestore.collection('analyses').doc(analysisId).get();
-  if (!snap.exists) throw new Error('Analysis not found');
-  const analysis = snap.data() as Analysis;
-  if (analysis.author !== employeeUid) throw new Error('Not the author');
-  if (analysis.status !== 'DRAFT') throw new Error('Only DRAFT can be submitted');
+export async function submitAnalysis(analysisId: string) {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'EMPLOYEE');
 
-  // Recalculate readiness score using simple heuristics: (symptoms + signals + hypotheses)/3 normalized
-  const score = Math.min(100, Math.round(((analysis.symptoms.length + analysis.signals.length + analysis.hypotheses.length) / 9) * 100));
-  if (score < 75) throw new Error('Readiness score must be ≥ 75 to submit');
-
-  const now = Date.now();
-  const statusEntry: StatusHistoryEntry = { status: 'SUBMITTED', changedAt: now, changedBy: employeeUid };
-
-  await adminFirestore.collection('analyses').doc(analysisId).update({ status: 'SUBMITTED', readinessScore: score, updatedAt: now, statusHistory: admin.firestore.FieldValue.arrayUnion(statusEntry) });
+  const response = await callPhpApi('POST', `/analyses/${analysisId}/submit`, {});
+  if (!response.success) throw new Error(response.error || 'Failed to submit analysis');
 
   return { success: true };
 }
 
-export async function submitAnalysisAction(form: FormData | { analysisId?: string; employeeUid?: string }) {
+export async function submitAnalysisAction(form: FormData | { analysisId?: string }) {
   const get = (k: string) => getValue(form as FormLike, k);
-  const employeeUid = String(get('employeeUid') ?? '');
   const analysisId = String(get('analysisId') ?? '');
-  if (!employeeUid || !analysisId) throw new Error('employeeUid and analysisId required');
-  await submitAnalysis(employeeUid, analysisId);
+  if (!analysisId) throw new Error('analysisId required');
+  await submitAnalysis(analysisId);
   return;
 }
-export async function managerReviewAnalysis(managerUid: string, analysisId: string, action: { type: 'NEEDS_CHANGES' | 'APPROVE'; note?: string }) {
-  await assertHasRole(managerUid, 'manager');
-  const snap = await adminFirestore.collection('analyses').doc(analysisId).get();
-  if (!snap.exists) throw new Error('Analysis not found');
-  const analysis = snap.data() as Analysis;
-  if (analysis.status !== 'SUBMITTED') throw new Error('Only SUBMITTED analyses can be reviewed');
 
-  const now = Date.now();
-  const status = action.type === 'APPROVE' ? 'APPROVED' : 'NEEDS_CHANGES';
-  const statusEntry: StatusHistoryEntry = { status, changedAt: now, changedBy: managerUid, note: action.note };
+export async function getAnalysisForEmployee(analysisId: string) {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'EMPLOYEE');
 
-  await adminFirestore.collection('analyses').doc(analysisId).update({ status, updatedAt: now, statusHistory: admin.firestore.FieldValue.arrayUnion(statusEntry) });
+  const response = await callPhpApi('GET', `/analyses/${analysisId}`);
+  if (!response.success) throw new Error(response.error || 'Analysis not found');
 
-  // If approved, create a draft report (AI-only generates draft summary; manager must finalize)
-  if (status === 'APPROVED') {
-    const taskSnap = await adminFirestore.collection('tasks').doc(analysis.taskId).get();
-    let taskTitle = analysis.taskId;
-    if (taskSnap.exists) {
-      const taskData = taskSnap.data() as Task;
-      taskTitle = taskData.title ?? taskTitle;
-    }
+  return response.data;
+}
 
-    const exec = await draftExecutiveSummary({ taskTitle, analysis: JSON.stringify(analysis) });
+export async function updateAnalysisContent(
+  analysisId: string,
+  payload: { symptoms?: string[]; signals?: string[]; hypotheses?: string[] }
+) {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'EMPLOYEE');
 
-    const report = {
-      taskId: analysis.taskId,
-      author: managerUid,
-      executiveSummaryDraft: { text: exec.summary, generatedAt: now, generatorModel: 'gemini-2.5-flash' },
-      status: 'DRAFT',
-      createdAt: now,
-      updatedAt: now,
-      statusHistory: [{ status: 'DRAFT', changedAt: now, changedBy: managerUid }],
-    } as Report;
-
-    const rRef = await adminFirestore.collection('reports').add(report);
-    return { reportId: rRef.id };
-  }
+  const response = await callPhpApi('PUT', `/analyses/${analysisId}`, payload);
+  if (!response.success) throw new Error(response.error || 'Failed to update analysis');
 
   return { success: true };
 }
 
-export async function listReportsForManager(managerUid: string, options?: { status?: Report['status']; limit?: number }) {
-  await assertHasRole(managerUid, 'manager');
-  let query: FirebaseFirestore.Query = adminFirestore.collection('reports').where('author', '==', managerUid);
-  if (options?.status) {
-    query = query.where('status', '==', options.status);
+export async function updateAnalysisSectionAction(
+  form: FormData | { analysisId?: string; section?: string; values?: string }
+) {
+  const get = (k: string) => getValue(form as FormLike, k);
+  const analysisId = String(get('analysisId') ?? '');
+  const section = String(get('section') ?? '');
+  const values = String(get('values') ?? '');
+  if (!analysisId || !section) throw new Error('analysisId and section required');
+  const items = values
+    .split('\n')
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  const payload: Record<string, string[]> = {};
+  if (section === 'symptoms') {
+    payload.symptoms = items;
+  } else if (section === 'signals') {
+    payload.signals = items;
+  } else if (section === 'hypotheses') {
+    payload.hypotheses = items;
+  } else {
+    throw new Error('Invalid section');
   }
-  const limit = Math.max(1, Math.min(50, options?.limit ?? 20));
-  const snap = await query.orderBy('updatedAt', 'desc').limit(limit).get();
-  return snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Report) }));
+
+  await updateAnalysisContent(analysisId, payload);
+  return;
 }
 
-export async function managerReviewAction(form: FormData | { managerUid?: string; analysisId?: string; type?: string; note?: string }) {
+// Manager review
+
+export async function managerReviewAnalysis(analysisId: string, action: { type: 'NEEDS_CHANGES' | 'APPROVE'; feedback?: string }) {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'MANAGER');
+
+  const response = await callPhpApi('POST', `/analyses/${analysisId}/review`, {
+    action: action.type === 'APPROVE' ? 'approve' : 'reject',
+    feedback: action.feedback,
+  });
+  if (!response.success) throw new Error(response.error || 'Failed to review analysis');
+
+  return response.data;
+}
+
+export async function listReportsForManager(options?: { limit?: number }) {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'MANAGER');
+
+  const endpoint = `/reports?${new URLSearchParams({ limit: String(options?.limit ?? 20) }).toString()}`;
+  const response = await callPhpApi('GET', endpoint);
+  if (!response.success) throw new Error(response.error || 'Failed to fetch reports');
+
+  return response.data ?? [];
+}
+
+export async function listSubmittedAnalysesForManager(options?: { limit?: number }) {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'MANAGER');
+
+  const endpoint = `/analyses?status=SUBMITTED&${new URLSearchParams({ limit: String(options?.limit ?? 20) }).toString()}`;
+  const response = await callPhpApi('GET', endpoint);
+  if (!response.success) throw new Error(response.error || 'Failed to fetch analyses');
+
+  return response.data ?? [];
+}
+
+export async function managerReviewAction(form: FormData | { analysisId?: string; type?: string; feedback?: string }) {
   const get = (k: string) => getValue(form as FormLike, k);
-  const managerUid = String(get('managerUid') ?? '');
   const analysisId = String(get('analysisId') ?? '');
   const type = String(get('type') ?? '');
-  const note = String(get('note') ?? '');
-  if (!managerUid || !analysisId || !type) throw new Error('managerUid, analysisId, and type are required');
+  const feedback = String(get('feedback') ?? get('note') ?? '');
+  if (!analysisId || !type) throw new Error('analysisId and type are required');
   if (!['NEEDS_CHANGES', 'APPROVE'].includes(type)) throw new Error('Invalid action type');
-  await managerReviewAnalysis(managerUid, analysisId, { type: type as 'NEEDS_CHANGES' | 'APPROVE', note });
+  await managerReviewAnalysis(analysisId, { type: type as 'NEEDS_CHANGES' | 'APPROVE', feedback });
   return;
 }
-export async function finalizeReport(managerUid: string, reportId: string) {
-  await assertHasRole(managerUid, 'manager');
 
-  const snap = await adminFirestore.collection('reports').doc(reportId).get();
-  if (!snap.exists) throw new Error('Report not found');
-  const report = snap.data() as Report;
-  if (report.status !== 'DRAFT') throw new Error('Only DRAFT can be finalized');
+// Owner reports
 
-  const now = Date.now();
-  const statusEntry: StatusHistoryEntry = { status: 'FINALIZED', changedAt: now, changedBy: managerUid };
+export async function getReportForOwner(reportId: string) {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'OWNER');
 
-  await adminFirestore.collection('reports').doc(reportId).update({ status: 'FINALIZED', updatedAt: now, statusHistory: admin.firestore.FieldValue.arrayUnion(statusEntry) });
+  const response = await callPhpApi('GET', `/reports/${reportId}`);
+  if (!response.success) throw new Error(response.error || 'Report not found');
 
-  return { success: true };
+  return response.data;
 }
 
-export async function getFinalizedReportForOwner(ownerUid: string, reportId: string) {
-  await assertHasRole(ownerUid, 'owner');
-  const snap = await adminFirestore.collection('reports').doc(reportId).get();
-  if (!snap.exists) throw new Error('Report not found');
-  const report = snap.data() as Report;
-  if (report.status !== 'FINALIZED') throw new Error('Report is not finalized');
-  return { id: snap.id, ...report };
-}
+export async function listReportsForOwner(options?: { limit?: number }) {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'OWNER');
 
-export async function listFinalizedReportsForOwner(ownerUid: string, options?: { limit?: number }) {
-  await assertHasRole(ownerUid, 'owner');
-  const limit = Math.max(1, Math.min(50, options?.limit ?? 20));
-  const snap = await adminFirestore
-    .collection('reports')
-    .where('status', '==', 'FINALIZED')
-    .orderBy('updatedAt', 'desc')
-    .limit(limit)
-    .get();
-  return snap.docs.map((doc) => ({ id: doc.id, ...(doc.data() as Report) }));
-}
-export async function finalizeReportAction(form: FormData | { managerUid?: string; reportId?: string }) {
-  const get = (k: string) => getValue(form as FormLike, k);
-  const managerUid = String(get('managerUid') ?? '');
-  const reportId = String(get('reportId') ?? '');
-  if (!managerUid || !reportId) throw new Error('managerUid and reportId required');
-  await finalizeReport(managerUid, reportId);
-  return;
+  const endpoint = `/reports?${new URLSearchParams({ limit: String(options?.limit ?? 20) }).toString()}`;
+  const response = await callPhpApi('GET', endpoint);
+  if (!response.success) throw new Error(response.error || 'Failed to fetch reports');
+
+  return response.data ?? [];
 }
 
 // UI-friendly wrappers (return ActionResult for client forms)
@@ -306,19 +343,19 @@ export async function submitAnalysisForm(_prev: ActionResult, formData: FormData
   }
 }
 
-export async function managerReviewForm(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+export async function updateAnalysisSectionForm(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
-    await managerReviewAction(formData);
-    return { ok: true, message: 'Review submitted.' };
+    await updateAnalysisSectionAction(formData);
+    return { ok: true, message: 'Analysis updated.' };
   } catch (err) {
     return { ok: false, message: toErrorMessage(err) };
   }
 }
 
-export async function finalizeReportForm(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
+export async function managerReviewForm(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
   try {
-    await finalizeReportAction(formData);
-    return { ok: true, message: 'Report finalized.' };
+    await managerReviewAction(formData);
+    return { ok: true, message: 'Review submitted.' };
   } catch (err) {
     return { ok: false, message: toErrorMessage(err) };
   }

@@ -1,23 +1,32 @@
 import * as admin from 'firebase-admin';
 
-if (!process.env.FIREBASE_ADMIN_CREDENTIALS) {
-  // In dev, people may use Application Default Credentials. If not present, we throw so deploy fails early.
+const useEmulators = process.env.FIRESTORE_EMULATOR_HOST || process.env.FIREBASE_AUTH_EMULATOR_HOST;
+
+if (!process.env.FIREBASE_ADMIN_CREDENTIALS && !useEmulators) {
   console.warn('FIREBASE_ADMIN_CREDENTIALS not provided; rely on ADC for local dev');
 }
 
 if (!admin.apps.length) {
   try {
-    const creds = process.env.FIREBASE_ADMIN_CREDENTIALS;
-    if (creds) {
-      const parsed = JSON.parse(creds);
+    if (useEmulators) {
+      // When using emulators, initialize with minimal config - no credentials needed
       admin.initializeApp({
-        credential: admin.credential.cert(parsed),
+        projectId: 'demo-project',
       });
+      // eslint-disable-next-line no-console
+      console.log('Firebase Admin initialized for emulators');
     } else {
-      admin.initializeApp(); // ADC or environment-based
+      const creds = process.env.FIREBASE_ADMIN_CREDENTIALS;
+      if (creds) {
+        const parsed = JSON.parse(creds);
+        admin.initializeApp({
+          credential: admin.credential.cert(parsed),
+        });
+      } else {
+        admin.initializeApp(); // ADC or environment-based
+      }
     }
   } catch (err) {
-    // Fail loudly during server-side operations if misconfigured
     console.error('Failed to initialize Firebase Admin:', err);
     throw err;
   }

@@ -1,59 +1,54 @@
-export type Role = 'employee' | 'manager' | 'owner';
+export type Role = 'EMPLOYEE' | 'MANAGER' | 'OWNER';
+
+export type TimestampLike = { seconds: number; nanoseconds: number };
 
 export type StatusHistoryEntry = {
   status: string;
-  changedAt: number; // epoch ms
-  changedBy: string; // uid
-  note?: string;
+  at: TimestampLike;
+  by: string;
 };
 
 export type UserProfile = {
   uid: string;
-  displayName: string;
   email: string;
   role: Role;
-  createdAt: number;
-  updatedAt: number;
-  statusHistory: StatusHistoryEntry[];
+  displayName: string;
+  createdAt: TimestampLike;
 };
 
 export type Task = {
   id?: string;
   title: string;
   description: string;
-  creator: string; // uid of manager who created
-  assignee?: string; // uid of employee
-  status: 'OPEN' | 'ASSIGNED' | 'CLOSED';
-  createdAt: number;
-  updatedAt: number;
+  assignedTo?: string;
+  createdBy: string;
+  status: 'OPEN' | 'IN_PROGRESS' | 'COMPLETED';
+  createdAt: TimestampLike;
+  updatedAt: TimestampLike;
   statusHistory: StatusHistoryEntry[];
 };
 
 export type Analysis = {
   id?: string;
   taskId: string;
-  author: string; // employee uid
+  employeeId: string;
+  status: 'DRAFT' | 'SUBMITTED' | 'NEEDS_CHANGES' | 'APPROVED';
+  analysisType: 'LATENCY' | 'SECURITY' | 'OUTAGE' | 'CAPACITY';
   symptoms: string[];
   signals: string[];
-  hypotheses: { text: string; confidence?: number }[];
-  readinessScore: number; // 0-100
-  status: 'DRAFT' | 'SUBMITTED' | 'NEEDS_CHANGES' | 'APPROVED';
-  createdAt: number;
-  updatedAt: number;
+  hypotheses: string[];
+  readinessScore: number;
+  managerFeedback?: string;
+  revisionCount: number;
   statusHistory: StatusHistoryEntry[];
+  createdAt: TimestampLike;
+  updatedAt: TimestampLike;
 };
 
 export type Report = {
   id?: string;
-  taskId: string;
-  author: string; // manager uid
-  executiveSummaryDraft?: {
-    text: string;
-    generatedAt: number;
-    generatorModel?: string;
-  };
-  status: 'DRAFT' | 'FINALIZED';
-  createdAt: number;
-  updatedAt: number;
-  statusHistory: StatusHistoryEntry[];
+  analysisId: string;
+  summary: string;
+  createdBy: string;
+  createdAt: TimestampLike;
 };

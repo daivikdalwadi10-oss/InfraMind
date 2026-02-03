@@ -1,131 +1,119 @@
 import React from 'react';
-import { listReportsForManager, listTasksForManager } from '@/src/app/actions';
+import { listReportsForManager, listSubmittedAnalysesForManager, listTasksForManager } from '@/src/app/actions';
 import ManagerForms from './ManagerForms';
+import PageHeader from '@/src/components/ui/PageHeader';
+import TaskList from '@/src/components/ui/TaskList';
+import GlassCard from '@/src/components/ui/GlassCard';
+import type { Task, TimestampLike, Analysis } from '@/src/lib/types';
 
+type ReportData = {
+  id?: string;
+  analysisId?: string;
+  createdAt?: { seconds: number; nanoseconds?: number };
+};
+
+type ManagerSearchParams = { taskStatus?: string; limit?: string };
 type ManagerPageProps = {
-  searchParams?: { managerUid?: string; taskStatus?: string; reportStatus?: string; limit?: string };
+  searchParams?: ManagerSearchParams | Promise<ManagerSearchParams>;
 };
 
 export default async function ManagerPage({ searchParams }: ManagerPageProps) {
-  const managerUid = searchParams?.managerUid ?? '';
-  const taskStatus = searchParams?.taskStatus ?? '';
-  const reportStatus = searchParams?.reportStatus ?? '';
-  const limit = searchParams?.limit ?? '';
+  const formatTimestamp = (value?: TimestampLike) =>
+    value ? new Date(value.seconds * 1000).toLocaleDateString() : '—';
+  const resolved = await (searchParams ?? {});
+  const taskStatus = resolved.taskStatus ?? '';
+  const limit = resolved.limit ?? '';
   let tasks: Awaited<ReturnType<typeof listTasksForManager>> = [];
   let reports: Awaited<ReturnType<typeof listReportsForManager>> = [];
+  let reviewQueue: Awaited<ReturnType<typeof listSubmittedAnalysesForManager>> = [];
   let error: string | null = null;
 
-  if (managerUid) {
-    try {
-      const parsedLimit = Number.isNaN(Number(limit)) ? undefined : Number(limit);
-      tasks = await listTasksForManager(managerUid, {
-        status: taskStatus ? (taskStatus as 'OPEN' | 'ASSIGNED' | 'CLOSED') : undefined,
-        limit: parsedLimit,
-      });
-      reports = await listReportsForManager(managerUid, {
-        status: reportStatus ? (reportStatus as 'DRAFT' | 'FINALIZED') : undefined,
-        limit: parsedLimit,
-      });
-    } catch (err) {
-      error = String(err);
-    }
+  try {
+    const parsedLimit = Number.isNaN(Number(limit)) ? undefined : Number(limit);
+    tasks = await listTasksForManager({
+      status: taskStatus ? (taskStatus as Task['status']) : undefined,
+      limit: parsedLimit,
+    });
+    reports = await listReportsForManager({ limit: parsedLimit });
+    reviewQueue = await listSubmittedAnalysesForManager({ limit: parsedLimit });
+  } catch (err) {
+    error = String(err);
   }
 
   // Simple server form using Server Action createTask
   return (
     <div className="space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold">Manager Dashboard</h1>
-        <p className="text-sm text-slate-600">Create tasks, review submitted analyses, and finalize reports.</p>
-      </header>
+      <PageHeader title="Overview" subtitle="Create tasks, review analyses, and generate reports." />
 
-      <ManagerForms managerUid={managerUid} />
+      <ManagerForms />
 
-      <section className="rounded-lg border bg-white p-4">
-        <h2 className="font-medium">Your Recent Tasks</h2>
-        <form method="get" className="mt-2 grid gap-2 max-w-md">
-          <input name="managerUid" defaultValue={managerUid} placeholder="Your Manager UID" className="w-full border p-2" />
-          <select name="taskStatus" defaultValue={taskStatus} className="w-full border p-2">
-            <option value="">All Statuses</option>
+      {error && <p className="text-sm text-rose-400">{error}</p>}
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <TaskList
+          title="Review queue"
+          items={(reviewQueue as Analysis[]).map((analysis) => ({
+            id: analysis.id ?? '',
+            title: `Analysis ${analysis.id}`,
+            description: `Task ${analysis.taskId}`,
+            status: analysis.status,
+            meta: `Updated ${formatTimestamp(analysis.updatedAt)}`,
+          }))}
+          emptyMessage="No submitted analyses awaiting review."
+        />
+
+        <TaskList
+          title="Recent tasks"
+          items={(tasks as Task[]).map((task) => ({
+            id: task.id ?? '',
+            title: task.title,
+            description: task.description,
+            status: task.status,
+            meta: `Assigned to ${task.assignedTo ?? 'Unassigned'}`,
+          }))}
+          emptyMessage="No tasks found."
+        />
+      </div>
+
+      <TaskList
+        title="Recent reports"
+        items={(reports as ReportData[]).map((report) => ({
+          id: report.id ?? '',
+          title: `Report ${report.id}`,
+          description: `Analysis ${report.analysisId}`,
+          status: 'APPROVED',
+          meta: `Created ${formatTimestamp(report.createdAt ? { seconds: report.createdAt.seconds, nanoseconds: report.createdAt.nanoseconds ?? 0 } : undefined)}`,
+        }))}
+        emptyMessage="No reports found."
+      />
+
+      <GlassCard>
+        <h2 className="text-sm font-semibold text-white">Filter records</h2>
+        <form method="get" className="mt-4 grid gap-3 md:grid-cols-3">
+          <select
+            name="taskStatus"
+            defaultValue={taskStatus}
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+          >
+            <option value="">All Task Statuses</option>
             <option value="OPEN">OPEN</option>
-            <option value="ASSIGNED">ASSIGNED</option>
-            <option value="CLOSED">CLOSED</option>
+            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="COMPLETED">COMPLETED</option>
           </select>
-          <input name="limit" defaultValue={limit} placeholder="Limit (1-50)" className="w-full border p-2" />
-          <button type="submit" className="px-4 py-2 bg-slate-800 text-white rounded">Refresh</button>
+          <input
+            name="limit"
+            defaultValue={limit}
+            placeholder="Limit (1-50)"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500"
+          />
+          <button
+            type="submit"
+            className="rounded-xl bg-blue-500 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-400"
+          >
+            Apply filters
+          </button>
         </form>
-
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-
-        {tasks.length === 0 && !error && (
-          <p className="mt-3 text-sm text-slate-600">No tasks found.</p>
-        )}
-
-        {tasks.length > 0 && (
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-slate-500">
-                  <th className="py-2">Task ID</th>
-                  <th className="py-2">Title</th>
-                  <th className="py-2">Assignee</th>
-                  <th className="py-2">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {tasks.map((task) => (
-                  <tr key={task.id} className="border-t">
-                    <td className="py-2 text-slate-700">{task.id}</td>
-                    <td className="py-2 text-slate-700">{task.title}</td>
-                    <td className="py-2 text-slate-700">{task.assignee ?? 'Unassigned'}</td>
-                    <td className="py-2 text-slate-700">{task.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-
-      <section className="rounded-lg border bg-white p-4">
-        <h2 className="font-medium">Your Recent Reports</h2>
-        <form method="get" className="mt-2 grid gap-2 max-w-md">
-          <input name="managerUid" defaultValue={managerUid} placeholder="Your Manager UID" className="w-full border p-2" />
-          <select name="reportStatus" defaultValue={reportStatus} className="w-full border p-2">
-            <option value="">All Statuses</option>
-            <option value="DRAFT">DRAFT</option>
-            <option value="FINALIZED">FINALIZED</option>
-          </select>
-          <input name="limit" defaultValue={limit} placeholder="Limit (1-50)" className="w-full border p-2" />
-          <button type="submit" className="px-4 py-2 bg-slate-800 text-white rounded">Refresh</button>
-        </form>
-        {reports.length === 0 && !error && (
-          <p className="mt-3 text-sm text-slate-600">No reports found.</p>
-        )}
-
-        {reports.length > 0 && (
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-slate-500">
-                  <th className="py-2">Report ID</th>
-                  <th className="py-2">Task</th>
-                  <th className="py-2">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reports.map((report) => (
-                  <tr key={report.id} className="border-t">
-                    <td className="py-2 text-slate-700">{report.id}</td>
-                    <td className="py-2 text-slate-700">{report.taskId}</td>
-                    <td className="py-2 text-slate-700">{report.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      </GlassCard>
     </div>
   );
 }

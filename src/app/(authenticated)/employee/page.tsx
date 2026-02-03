@@ -1,85 +1,111 @@
 import React from 'react';
-import { listAnalysesForEmployee } from '@/src/app/actions';
+import Link from 'next/link';
+import { listAnalysesForEmployee, listTasksForEmployee } from '@/src/app/actions';
+import type { Analysis, Task } from '@/src/lib/types';
 import EmployeeForms from './EmployeeForms';
+import PageHeader from '@/src/components/ui/PageHeader';
+import TaskList from '@/src/components/ui/TaskList';
+import GlassCard from '@/src/components/ui/GlassCard';
 
+type EmployeeSearchParams = { status?: string; limit?: string };
 type EmployeePageProps = {
-  searchParams?: { employeeUid?: string; status?: string; limit?: string };
+  searchParams?: EmployeeSearchParams | Promise<EmployeeSearchParams>;
 };
 
 export default async function EmployeePage({ searchParams }: EmployeePageProps) {
-  const employeeUid = searchParams?.employeeUid ?? '';
-  const status = searchParams?.status ?? '';
-  const limit = searchParams?.limit ?? '';
+  const resolved = await (searchParams ?? {});
+  const status = resolved.status ?? '';
+  const limit = resolved.limit ?? '';
   let analyses: Awaited<ReturnType<typeof listAnalysesForEmployee>> = [];
+  let tasks: Awaited<ReturnType<typeof listTasksForEmployee>> = [];
   let error: string | null = null;
 
-  if (employeeUid) {
-    try {
-      const parsedLimit = Number.isNaN(Number(limit)) ? undefined : Number(limit);
-      analyses = await listAnalysesForEmployee(employeeUid, {
-        status: status ? (status as 'DRAFT' | 'SUBMITTED' | 'NEEDS_CHANGES' | 'APPROVED') : undefined,
-        limit: parsedLimit,
-      });
-    } catch (err) {
-      error = String(err);
-    }
+  try {
+    const parsedLimit = Number.isNaN(Number(limit)) ? undefined : Number(limit);
+    analyses = await listAnalysesForEmployee({
+      status: status ? (status as Analysis['status']) : undefined,
+      limit: parsedLimit,
+    });
+    tasks = await listTasksForEmployee({ limit: parsedLimit });
+  } catch (err) {
+    error = String(err);
   }
 
   return (
     <div className="space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold">Employee Dashboard</h1>
-        <p className="text-sm text-slate-600">Start analyses, request AI hypothesis suggestions, and submit when ready.</p>
-      </header>
+      <PageHeader
+        title="Overview"
+        subtitle="Start analyses, request AI hypotheses, and submit when ready."
+        actions={
+          <Link
+            href="/employee"
+            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white hover:bg-white/10"
+          >
+            Refresh
+          </Link>
+        }
+      />
 
-      <EmployeeForms employeeUid={employeeUid} />
+      <EmployeeForms />
 
-      <section className="rounded-lg border bg-white p-4">
-        <h2 className="font-medium">Your Recent Analyses</h2>
-        <form method="get" className="mt-2 grid gap-2 max-w-md">
-          <input name="employeeUid" defaultValue={employeeUid} placeholder="Your Employee UID" className="w-full border p-2" />
-          <select name="status" defaultValue={status} className="w-full border p-2">
+      {error && <p className="text-sm text-rose-400">{error}</p>}
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <TaskList
+          title="Assigned tasks"
+          items={(tasks as Task[]).map((task) => ({
+            id: task.id ?? '',
+            title: task.title,
+            description: task.description,
+            status: task.status,
+            meta: `Task ID: ${task.id}`,
+          }))}
+          emptyMessage="No assigned tasks yet."
+        />
+
+        <TaskList
+          title="Recent analyses"
+          items={(analyses as Analysis[]).map((analysis) => ({
+            id: analysis.id ?? '',
+            title: `Analysis ${analysis.id}`,
+            description: `Task ${analysis.taskId}`,
+            status: analysis.status,
+            meta: `Readiness ${analysis.readinessScore}%`,
+            href: `/employee/analysis/${analysis.id}`,
+            ctaLabel: 'Continue Analysis',
+          }))}
+          emptyMessage="No analyses found."
+        />
+      </div>
+
+      <GlassCard>
+        <h2 className="text-sm font-semibold text-white">Filter analyses</h2>
+        <form method="get" className="mt-4 grid gap-3 md:grid-cols-3">
+          <select
+            name="status"
+            defaultValue={status}
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+          >
             <option value="">All Statuses</option>
             <option value="DRAFT">DRAFT</option>
             <option value="SUBMITTED">SUBMITTED</option>
             <option value="NEEDS_CHANGES">NEEDS_CHANGES</option>
             <option value="APPROVED">APPROVED</option>
           </select>
-          <input name="limit" defaultValue={limit} placeholder="Limit (1-50)" className="w-full border p-2" />
-          <button type="submit" className="px-4 py-2 bg-slate-800 text-white rounded">Refresh</button>
+          <input
+            name="limit"
+            defaultValue={limit}
+            placeholder="Limit (1-50)"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-slate-500"
+          />
+          <button
+            type="submit"
+            className="rounded-xl bg-blue-500 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-400"
+          >
+            Apply filters
+          </button>
         </form>
-
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-
-        {analyses.length === 0 && !error && (
-          <p className="mt-3 text-sm text-slate-600">No analyses found.</p>
-        )}
-
-        {analyses.length > 0 && (
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-slate-500">
-                  <th className="py-2">Analysis ID</th>
-                  <th className="py-2">Task</th>
-                  <th className="py-2">Status</th>
-                  <th className="py-2">Readiness</th>
-                </tr>
-              </thead>
-              <tbody>
-                {analyses.map((analysis) => (
-                  <tr key={analysis.id} className="border-t">
-                    <td className="py-2 text-slate-700">{analysis.id}</td>
-                    <td className="py-2 text-slate-700">{analysis.taskId}</td>
-                    <td className="py-2 text-slate-700">{analysis.status}</td>
-                    <td className="py-2 text-slate-700">{analysis.readinessScore}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      </GlassCard>
     </div>
   );
 }

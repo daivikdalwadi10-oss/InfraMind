@@ -7,3 +7,13 @@ coverage
 dist
 tsconfig.tsbuildinfo
 firestore-debug.log
+backend/vendor/
+backend/logs/
+backend/mysql-data/
+backend/public/logs/
+backend/sqlite.db
+backend/.env
+backend/database.sqlite
+backend/public/database.sqlite
+lint_output.txt
+server.log

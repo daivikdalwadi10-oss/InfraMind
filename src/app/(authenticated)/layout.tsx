@@ -1,12 +1,14 @@
 import React from 'react';
-import Navbar from '@/src/components/Navbar';
+import { redirect } from 'next/navigation';
+import AppShell from '@/src/components/AppShell';
+import { getCurrentUserProfile } from '@/src/app/actions';
 
-export default function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
-  // In a full app, we'd resolve the user server-side and pass props. For now, scaffolded.
-  return (
-    <div>
-      <Navbar role={"authenticated"} />
-      <main className="max-w-6xl mx-auto p-6">{children}</main>
-    </div>
-  );
+export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
+  let profile = null;
+  try {
+    profile = await getCurrentUserProfile();
+  } catch {
+    redirect('/login');
+  }
+  return <AppShell user={{ displayName: profile?.name, role: profile?.role }}>{children}</AppShell>;
 }

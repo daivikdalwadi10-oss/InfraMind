@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: inframind-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: inframind
+      MYSQL_USER: inframind
+      MYSQL_PASSWORD: inframindpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  php:
+    build: .
+    container_name: inframind-php
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: inframind
+      DB_USER: inframind
+      DB_PASSWORD: inframindpass
+      DB_CHARSET: utf8mb4
+      APP_ENV: development
+      APP_DEBUG: "true"
+      GENKIT_API_KEY: ${GENKIT_API_KEY:-}
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+      - ./logs:/var/www/html/logs
+    command: >
+      sh -c "
+      sleep 10 &&
+      echo 'Running migrations...' &&
+      php bin/migrate.php &&
+      echo 'Seeding data...' &&
+      php bin/seed.php &&
+      echo 'Starting Apache...' &&
+      apache2-foreground
+      "
+
+volumes:
+  mysql_data:

@@ -41,7 +41,7 @@ describe('Server Actions', () => {
       return { doc: () => ({ get: async () => ({ exists: false }) }) };
     });
 
-    await expect(actions.submitAnalysis(employeeUid, analysisId)).resolves.toEqual({ success: true });
+    await expect(actions.submitAnalysis(analysisId)).resolves.toEqual({ success: true });
     expect(updateMock).toHaveBeenCalled();
     const calledWith = updateMock.mock.calls[0][0];
     expect(calledWith.status).toBe('SUBMITTED');
@@ -83,7 +83,7 @@ describe('Server Actions', () => {
       return { doc: () => ({ get: async () => ({ exists: false }) }) };
     });
 
-    await expect(actions.submitAnalysis(employeeUid, analysisId)).rejects.toThrow(/Readiness score must be/i);
+    await expect(actions.submitAnalysis(analysisId)).rejects.toThrow(/Readiness score must be/i);
   });
 
   it('managerReviewAnalysis -> APPROVE creates draft report with executive summary', async () => {
@@ -113,8 +113,8 @@ describe('Server Actions', () => {
       return { doc: () => ({ get: async () => ({ exists: false }) }) };
     });
 
-    const res = await actions.managerReviewAnalysis(managerUid, analysisId, { type: 'APPROVE' });
-    expect(res.reportId).toBe('r-1');
+    const res = await actions.managerReviewAnalysis(analysisId, { type: 'APPROVE' });
+    expect(res?.reportId).toBe('r-1');
     expect(addMock).toHaveBeenCalled();
     // analysis update should have been called to set APPROVED
     expect(analysisUpdateMock).toHaveBeenCalled();
@@ -153,8 +153,8 @@ describe('Server Actions', () => {
       return { doc: () => ({ get: async () => ({ exists: false }) }) };
     });
 
-    const res = await actions.managerReviewAnalysis(managerUid, analysisId, { type: 'NEEDS_CHANGES', note: 'Fix this' });
-    expect(res.success).toBe(true);
+    const res = await actions.managerReviewAnalysis(analysisId, { type: 'NEEDS_CHANGES', feedback: 'Fix this' });
+    expect(res?.success).toBe(true);
     expect(analysisUpdateMock).toHaveBeenCalled();
     const updateArg = analysisUpdateMock.mock.calls[0][0];
     expect(updateArg.status).toBe('NEEDS_CHANGES');
