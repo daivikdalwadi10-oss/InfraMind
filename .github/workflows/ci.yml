@@ -29,19 +29,21 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
       - name: Run unit tests with coverage (artifact)
+        continue-on-error: true
         run: npm run test:unit:coverage
       - name: Upload coverage artifact
+        if: always() && hashFiles('coverage/lcov.info') != ''
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: coverage-lcov
           path: coverage/lcov.info
       - name: Upload to Codecov
-        if: env.CODECOV_TOKEN != ''
+        if: always() && hashFiles('coverage/lcov.info') != '' && secrets.CODECOV_TOKEN != ''
+        continue-on-error: true
         uses: codecov/codecov-action@v4
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          token: ${{ env.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
           flags: unittests
           name: codecov-coverage
