@@ -39,11 +39,10 @@ jobs:
           name: coverage-lcov
           path: coverage/lcov.info
       - name: Upload to Codecov
-        if: always() && hashFiles('coverage/lcov.info') != '' && secrets.CODECOV_TOKEN != ''
+        if: always() && hashFiles('coverage/lcov.info') != ''
         continue-on-error: true
         uses: codecov/codecov-action@v4
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
           flags: unittests
           name: codecov-coverage
