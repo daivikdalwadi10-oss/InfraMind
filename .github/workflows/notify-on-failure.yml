@@ -20,10 +20,12 @@ jobs:
             const body = `Workflow **${run.name}** failed on branch **${run.head_branch}**\n\nCheck details: ${run.html_url}`;
             await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body });
       - name: Notify Slack (if configured)
-        if: env.SLACK_WEBHOOK != ''
+        if: always()
+        continue-on-error: true
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         run: |
+          if [ -z "$SLACK_WEBHOOK" ]; then exit 0; fi
           title="CI Failure: ${{ github.event.workflow_run.name }}"
           branch="${{ github.event.workflow_run.head_branch }}"
           url="${{ github.event.workflow_run.html_url }}"
