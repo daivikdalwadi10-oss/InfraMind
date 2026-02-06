@@ -1,6 +1,6 @@
 <?php
 /**
- * Secure Adminer Login Page
+ * Secure phpMyAdmin Login Page
  * Protects database admin interface with username/password authentication
  */
 
@@ -12,8 +12,8 @@ const ADMIN_PASSWORD = 'AdminPassword123!'; // CHANGE THIS IN PRODUCTION
 
 // Check if already authenticated
 if (isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true) {
-    // Redirect to adminer
-    header('Location: adminer.php');
+    // Redirect to phpMyAdmin
+    header('Location: http://localhost:8080');
     exit;
 }
 
@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($username === ADMIN_USER && $password === ADMIN_PASSWORD) {
         $_SESSION['admin_authenticated'] = true;
         $_SESSION['admin_login_time'] = time();
-        header('Location: adminer.php');
+        header('Location: http://localhost:8080');
         exit;
     } else {
         $error = 'Invalid username or password';
@@ -168,7 +168,7 @@ if (isset($_SESSION['admin_login_time']) && time() - $_SESSION['admin_login_time
     <div class="login-container">
         <div class="login-header">
             <h1>🔐 Database Admin</h1>
-            <p>Secure Access Required</p>
+            <p>phpMyAdmin Access</p>
         </div>
         
         <?php if ($error): ?>

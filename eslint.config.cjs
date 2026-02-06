@@ -1,6 +1,14 @@
 module.exports = [
   {
-    ignores: ["node_modules/**"],
+    ignores: [
+      "node_modules/**",
+      ".next/**",
+      "frontend/.next/**",
+      "dist/**",
+      "build/**",
+      "coverage/**",
+      "backend/vendor/**"
+    ],
     languageOptions: {
       parser: require("@typescript-eslint/parser"),
       parserOptions: {

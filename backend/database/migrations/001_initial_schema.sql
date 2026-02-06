@@ -1,135 +1,135 @@
 -- Initial schema migration for InfraMind
--- This creates all required tables with proper constraints, indices, and audit support
+-- SQLite-compatible version (no ENUM, no ON UPDATE, no DEFAULT UUID())
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
-    id VARCHAR(36) PRIMARY KEY,
-    email VARCHAR(255) UNIQUE NOT NULL,
+    id TEXT PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    role ENUM('EMPLOYEE','MANAGER','OWNER') NOT NULL DEFAULT 'EMPLOYEE',
-    display_name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    last_login_at TIMESTAMP NULL,
-    is_active BOOLEAN NOT NULL DEFAULT true,
-    deleted_at TIMESTAMP NULL,
-    INDEX idx_email (email),
-    INDEX idx_role (role),
-    INDEX idx_created_at (created_at),
-    INDEX idx_deleted_at (deleted_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    role TEXT NOT NULL DEFAULT 'EMPLOYEE' CHECK (role IN ('EMPLOYEE','MANAGER','OWNER')),
+    display_name TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_login_at TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    deleted_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
+CREATE INDEX IF NOT EXISTS idx_users_deleted_at ON users(deleted_at);
 
 -- Tasks table
 CREATE TABLE IF NOT EXISTS tasks (
-    id VARCHAR(36) PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
     description TEXT,
-    assigned_to VARCHAR(36),
-    created_by VARCHAR(36) NOT NULL,
-    status ENUM('OPEN','IN_PROGRESS','COMPLETED') NOT NULL DEFAULT 'OPEN',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_created_by (created_by),
-    INDEX idx_assigned_to (assigned_to),
-    INDEX idx_status (status),
-    INDEX idx_created_at (created_at),
+    assigned_to TEXT,
+    created_by TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'OPEN' CHECK (status IN ('OPEN','IN_PROGRESS','COMPLETED')),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (created_by) REFERENCES users(id),
     FOREIGN KEY (assigned_to) REFERENCES users(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
+CREATE INDEX IF NOT EXISTS idx_tasks_created_by ON tasks(created_by);
+CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON tasks(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_created_at ON tasks(created_at);
 
 -- Analyses table
 CREATE TABLE IF NOT EXISTS analyses (
-    id VARCHAR(36) PRIMARY KEY,
-    task_id VARCHAR(36) NOT NULL UNIQUE,
-    employee_id VARCHAR(36) NOT NULL,
-    status ENUM('DRAFT','SUBMITTED','NEEDS_CHANGES','APPROVED') NOT NULL DEFAULT 'DRAFT',
-    analysis_type ENUM('LATENCY','SECURITY','OUTAGE','CAPACITY') NOT NULL,
-    symptoms JSON,
-    signals JSON,
-    hypotheses JSON,
-    readiness_score INT NOT NULL DEFAULT 0,
-    revision_count INT NOT NULL DEFAULT 0,
+    id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL UNIQUE,
+    employee_id TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT','SUBMITTED','NEEDS_CHANGES','APPROVED')),
+    analysis_type TEXT NOT NULL CHECK (analysis_type IN ('LATENCY','SECURITY','OUTAGE','CAPACITY')),
+    symptoms TEXT,
+    signals TEXT,
+    hypotheses TEXT,
+    readiness_score INTEGER NOT NULL DEFAULT 0,
+    revision_count INTEGER NOT NULL DEFAULT 0,
     manager_feedback TEXT,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_employee_id (employee_id),
-    INDEX idx_status (status),
-    INDEX idx_task_id (task_id),
-    INDEX idx_created_at (created_at),
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (task_id) REFERENCES tasks(id),
     FOREIGN KEY (employee_id) REFERENCES users(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
+CREATE INDEX IF NOT EXISTS idx_analyses_employee_id ON analyses(employee_id);
+CREATE INDEX IF NOT EXISTS idx_analyses_status ON analyses(status);
+CREATE INDEX IF NOT EXISTS idx_analyses_task_id ON analyses(task_id);
+CREATE INDEX IF NOT EXISTS idx_analyses_created_at ON analyses(created_at);
 
 -- Analysis hypotheses (normalized for better querying and revision tracking)
 CREATE TABLE IF NOT EXISTS analysis_hypotheses (
-    id VARCHAR(36) PRIMARY KEY,
-    analysis_id VARCHAR(36) NOT NULL,
+    id TEXT PRIMARY KEY,
+    analysis_id TEXT NOT NULL,
     text TEXT NOT NULL,
-    confidence INT NOT NULL,
-    evidence JSON,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_analysis_id (analysis_id),
-    INDEX idx_confidence (confidence),
+    confidence INTEGER NOT NULL,
+    evidence TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (analysis_id) REFERENCES analyses(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
+CREATE INDEX IF NOT EXISTS idx_hypotheses_analysis_id ON analysis_hypotheses(analysis_id);
+CREATE INDEX IF NOT EXISTS idx_hypotheses_confidence ON analysis_hypotheses(confidence);
 
 -- Reports table
 CREATE TABLE IF NOT EXISTS reports (
-    id VARCHAR(36) PRIMARY KEY,
-    analysis_id VARCHAR(36) NOT NULL,
+    id TEXT PRIMARY KEY,
+    analysis_id TEXT NOT NULL,
     summary TEXT NOT NULL,
-    created_by VARCHAR(36) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_analysis_id (analysis_id),
-    INDEX idx_created_by (created_by),
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (analysis_id) REFERENCES analyses(id),
     FOREIGN KEY (created_by) REFERENCES users(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
+CREATE INDEX IF NOT EXISTS idx_reports_analysis_id ON reports(analysis_id);
+CREATE INDEX IF NOT EXISTS idx_reports_created_by ON reports(created_by);
 
 -- Audit logs for compliance and debugging
 CREATE TABLE IF NOT EXISTS audit_logs (
-    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    entity_type VARCHAR(50) NOT NULL,
-    entity_id VARCHAR(36) NOT NULL,
-    action VARCHAR(50) NOT NULL,
-    user_id VARCHAR(36),
-    changes JSON,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_entity (entity_type, entity_id),
-    INDEX idx_user_id (user_id),
-    INDEX idx_action (action),
-    INDEX idx_created_at (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    id TEXT PRIMARY KEY,
+    entity_type TEXT NOT NULL,
+    entity_id TEXT NOT NULL,
+    action TEXT NOT NULL,
+    user_id TEXT,
+    changes TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_user_id ON audit_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_logs(created_at);
 
 -- Status history tracking for analyses (denormalized for quick access)
 CREATE TABLE IF NOT EXISTS analysis_status_history (
-    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    analysis_id VARCHAR(36) NOT NULL,
-    status VARCHAR(50) NOT NULL,
-    changed_by VARCHAR(36),
-    changed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    details JSON,
-    INDEX idx_analysis_id (analysis_id),
-    INDEX idx_changed_at (changed_at),
+    id TEXT PRIMARY KEY,
+    analysis_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    changed_by TEXT,
+    changed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    details TEXT,
     FOREIGN KEY (analysis_id) REFERENCES analyses(id) ON DELETE CASCADE,
     FOREIGN KEY (changed_by) REFERENCES users(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
+CREATE INDEX IF NOT EXISTS idx_status_history_analysis_id ON analysis_status_history(analysis_id);
+CREATE INDEX IF NOT EXISTS idx_status_history_changed_at ON analysis_status_history(changed_at);
 
 -- Analysis revisions for versioning and rollback capability
 CREATE TABLE IF NOT EXISTS analysis_revisions (
-    id VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
-    analysis_id VARCHAR(36) NOT NULL,
-    revision_number INT NOT NULL,
-    symptoms JSON,
-    signals JSON,
-    hypotheses JSON,
-    readiness_score INT,
-    created_by VARCHAR(36),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id TEXT PRIMARY KEY,
+    analysis_id TEXT NOT NULL,
+    revision_number INTEGER NOT NULL,
+    symptoms TEXT,
+    signals TEXT,
+    hypotheses TEXT,
+    readiness_score INTEGER,
+    created_by TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     notes TEXT,
-    INDEX idx_analysis_id (analysis_id),
-    INDEX idx_revision_number (revision_number),
-    UNIQUE KEY unique_revision (analysis_id, revision_number),
     FOREIGN KEY (analysis_id) REFERENCES analyses(id) ON DELETE CASCADE,
-    FOREIGN KEY (created_by) REFERENCES users(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    FOREIGN KEY (created_by) REFERENCES users(id),
+    UNIQUE (analysis_id, revision_number)
+);
+CREATE INDEX IF NOT EXISTS idx_revisions_analysis_id ON analysis_revisions(analysis_id);
+CREATE INDEX IF NOT EXISTS idx_revisions_revision_number ON analysis_revisions(revision_number);

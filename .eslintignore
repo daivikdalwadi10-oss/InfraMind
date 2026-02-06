@@ -1,0 +1,7 @@
+.next/
+frontend/.next/
+dist/
+build/
+coverage/
+backend/vendor/
+node_modules/

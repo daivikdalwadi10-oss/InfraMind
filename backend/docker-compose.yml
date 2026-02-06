@@ -10,14 +10,28 @@ services:
       MYSQL_USER: inframind
       MYSQL_PASSWORD: inframindpass
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./database/migrations:/docker-entrypoint-initdb.d
+      - ./mysql-data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 20s
       retries: 10
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: inframind-phpmyadmin
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: inframind
+      PMA_PASSWORD: inframindpass
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "8080:80"
+    restart: unless-stopped
 
   php:
     build: .

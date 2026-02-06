@@ -174,4 +174,3 @@ SQL;
     echo "❌ Error: " . $e->getMessage() . "\n";
     exit(1);
 }
-SQL;

@@ -1,0 +1,11 @@
+{
+  "eslint.ignorePatterns": [
+    ".next/**",
+    "frontend/.next/**",
+    "node_modules/**",
+    "backend/vendor/**",
+    "dist/**",
+    "build/**",
+    "coverage/**"
+  ]
+}

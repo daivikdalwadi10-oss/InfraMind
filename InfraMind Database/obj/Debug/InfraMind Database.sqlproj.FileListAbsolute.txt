@@ -1,0 +1,5 @@
+C:\workspace\inframind\InfraMind Database\bin\Debug\InfraMind Database.dacpac
+C:\workspace\inframind\InfraMind Database\obj\Debug\Model.xml
+C:\workspace\inframind\InfraMind Database\obj\Debug\refactor.xml
+C:\workspace\inframind\InfraMind Database\obj\Debug\postdeploy.sql
+C:\workspace\inframind\InfraMind Database\obj\Debug\predeploy.sql

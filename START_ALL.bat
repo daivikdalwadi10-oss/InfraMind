@@ -46,10 +46,10 @@ echo ✓ npm found:
 npm --version
 echo.
 
-REM Check if node_modules exist
-if not exist "node_modules" (
+REM Check if frontend node_modules exist
+if not exist "frontend\node_modules" (
     echo Installing frontend dependencies...
-    call npm install
+    call npm --prefix frontend install
     if %errorlevel% neq 0 (
         echo ERROR: Failed to install dependencies
         exit /b 1
@@ -57,6 +57,51 @@ if not exist "node_modules" (
     echo ✓ Dependencies installed
     echo.
 )
+
+REM Ensure Docker is available
+docker --version >nul 2>nul
+if %errorlevel% neq 0 (
+    echo ERROR: Docker is not available
+    exit /b 1
+)
+
+REM Start MySQL and phpMyAdmin
+echo Starting MySQL and phpMyAdmin...
+pushd backend
+docker compose up -d mysql phpmyadmin
+popd
+echo Waiting for MySQL to be ready...
+set /a READY=0
+for /l %%i in (1,1,12) do (
+    docker compose -f backend\docker-compose.yml exec -T mysql mysqladmin ping -h 127.0.0.1 -prootpassword >nul 2>nul
+    if %errorlevel%==0 (
+        set /a READY=1
+        goto :mysqlready
+    )
+    timeout /t 3 /nobreak >nul
+)
+:mysqlready
+if %READY%==0 (
+    echo ERROR: MySQL did not become ready
+    exit /b 1
+)
+
+REM Run backend migrations and seed
+echo Running backend migrations and seed...
+pushd backend
+php bin\migrate.php
+if %errorlevel% neq 0 (
+    echo ERROR: Migration failed
+    popd
+    exit /b 1
+)
+php bin\seed.php
+if %errorlevel% neq 0 (
+    echo ERROR: Seeding failed
+    popd
+    exit /b 1
+)
+popd
 
 REM Display instructions
 echo ================================================================
@@ -73,9 +118,8 @@ echo   • Frontend:     http://localhost:3000
 echo   • Backend API:  http://localhost:8000
 echo   • Database:     http://localhost:8000/admin-login.php
 echo.
-echo Database Login:
-echo   Username: admin
-echo   Password: AdminPassword123!
+echo Database Admin:
+echo   phpMyAdmin: http://localhost:8080
 echo.
 echo Press any key to start servers...
 pause >nul
@@ -94,6 +138,14 @@ echo.
 echo Starting Frontend Next.js Server...
 echo.
 start "InfraMind - Frontend (Next.js)" /d "." cmd /k "npm run dev"
+
+echo Warming frontend...
+for /l %%i in (1,1,10) do (
+    powershell -Command "try { Invoke-WebRequest -Uri 'http://localhost:3000' -UseBasicParsing -TimeoutSec 10 | Out-Null; exit 0 } catch { exit 1 }" >nul 2>nul
+    if %errorlevel%==0 goto :warmdone
+    timeout /t 3 /nobreak >nul
+)
+:warmdone
 
 echo.
 echo ================================================================

@@ -1,56 +1,14 @@
 {
-  "name": "inframind",
-  "version": "0.1.0",
+  "name": "inframind-monorepo",
+  "version": "1.0.0",
   "private": true,
+  "workspaces": [
+    "frontend"
+  ],
   "scripts": {
-    "prepare": "husky install",
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "npx eslint --ext .ts,.tsx src --max-warnings=0",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest",
-    "test:unit": "vitest src/ai/flows --run",
-    "test:unit:coverage": "vitest src/ai/flows --run --coverage",
-    "test:integration": "vitest src/app/__tests__/actions.integration.test.ts --run",
-    "test:ci": "npm run test:unit && npm run test:integration",
-    "coverage": "vitest --run --coverage"
-  },
-  "dependencies": {
-    "@radix-ui/react-dialog": "^1.1.15",
-    "@radix-ui/react-dropdown-menu": "^2.0.0",
-    "@radix-ui/react-toast": "^1.2.15",
-    "firebase": "^10.7.0",
-    "firebase-admin": "^12.0.0",
-    "lucide-react": "^0.200.0",
-    "next": "^16.1.6",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
-  },
-  "devDependencies": {
-    "@firebase/rules-unit-testing": "^3.0.0",
-    "@tailwindcss/postcss": "^4.1.18",
-    "@types/node-fetch": "^2.6.13",
-    "@types/react": "19.2.10",
-    "@types/react-dom": "^19.2.3",
-    "autoprefixer": "^10.0.0",
-    "eslint": "^9.0.0",
-    "eslint-config-next": "^16.1.6",
-    "husky": "^8.0.0",
-    "lint-staged": "^16.2.7",
-    "postcss": "^8.0.0",
-    "prettier": "^2.0.0",
-    "tailwindcss": "^4.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^4.0.18"
-  },
-  "overrides": {
-    "fast-xml-parser": "^5.3.4"
-  },
-  "lint-staged": {
-    "*.{ts,tsx}": [
-      "npx eslint --ext .ts,.tsx src --fix",
-      "git add"
-    ]
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix frontend run start",
+    "lint": "npm --prefix frontend run lint"
   }
 }

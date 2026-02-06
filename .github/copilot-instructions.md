@@ -5,17 +5,20 @@ Purpose: short, actionable guidance so AI coding agents can be productive immedi
 ---
 
 ## Big picture (2-3 lines)
-- InfraMind is a Next.js (App Router) TypeScript app backed by Firebase Auth + Firestore. UI is Tailwind + shadcn; business logic lives in Next.js Server Actions and runs server-side only.
+- InfraMind is a Next.js (App Router) TypeScript frontend backed by a PHP 8.2+ REST API with SQLite database. UI is Tailwind + shadcn; business logic lives in Next.js Server Actions and PHP backend.
 - AI is provided via Genkit (wrapper in `src/ai/genkit.ts`) calling Google Gemini (`gemini-2.5-flash`). All AI calls must be server-side and produce strictly structured JSON.
 
 ---
 
 ## Key files & where to make changes 🔧
-- `src/lib/types.ts` — canonical data models (UserProfile, Task, Analysis, Report). Keep types and Firestore schema in sync.
-- `firestore.rules` — the final authority for role-based access. Any server-side changes must be reconciled with rules.
+- `src/lib/types.ts` — canonical data models (UserProfile, Task, Analysis, Report). Keep types in sync with PHP backend models.
+- `backend/src/Models/` — PHP model classes that map to database tables.
+- `backend/database/migrations/001_initial_schema.sql` — SQLite database schema definition.
 - `src/lib/auth.ts` — helper asserts (`assertHasRole`, `assertAtLeastRole`) used by Server Actions to re-validate permissions.
-- `src/firebase/admin.ts` & `src/firebase/client.ts` — admin vs client SDK initialization; check env vars `FIREBASE_ADMIN_CREDENTIALS` and `NEXT_PUBLIC_FIREBASE_*`.
-- `src/app/actions.ts` — central place for Server Actions (business logic must live here; NO client-side business logic).
+- `backend/src/Controllers/AuthController.php` — authentication logic (signup, login, token refresh).
+- `backend/public/index.php` — central place for route registration and middleware.
+- `src/app/actions.ts` — Next.js Server Actions (calls PHP backend via `callPhpApi`).
+- `src/lib/api.ts` — PHP API client wrapper.
 - `src/ai/genkit.ts` — minimal Genkit wrapper; use this for all AI interactions. It returns `{ success, data?, error? }`.
 - `src/ai/flows/*.ts` — example AI flows: `suggestHypotheses.ts` (returns JSON array of hypotheses) and `draftExecutiveSummary.ts` (returns JSON with `summary`, `highlights`, `recommendedAction`). Follow their structured-output patterns.
 
@@ -23,31 +26,32 @@ Purpose: short, actionable guidance so AI coding agents can be productive immedi
 
 ## Project conventions & important rules (READ CAREFULLY) ⚠️
 - No AI calls from the frontend. All Genkit/Gemini usage must be via server-side flows (`src/ai/*`) called by Server Actions.
-- All state transitions must occur in Server Actions and must update `statusHistory` (for audits). Update both the Firestore document and the history array atomically.
-- Firestore security rules are the final authority; always ensure server-side validations mirror rule constraints. If you add a new status or field, update both `src/lib/types.ts` and `firestore.rules`.
+- All state transitions must occur in Server Actions and must update `statusHistory` (for audits). Server Actions call PHP backend which updates the database.
+- PHP backend enforces role-based access control. Always ensure Server Actions validate permissions using `assertHasRole` / `assertAtLeastRole` before calling backend.
 - AI must return structured JSON. Flows explicitly parse JSON and throw on parse errors — follow the same pattern (see `suggestHypotheses.ts`).
-- Use `assertHasRole` / `assertAtLeastRole` from `src/lib/auth.ts` in Server Actions to validate permissions, even if rules already enforce it.
 - Readiness score rules: analyses must be >= 75 to allow submission; enforce this in the submit Server Action.
-- **Owners may read `reports` only when `status == 'FINALIZED'`.** If you change report lifecycle states, update `firestore.rules` and integration tests accordingly.
-- Owners are read-only for raw analyses — ensure owner access never exposes raw analysis docs directly.
+- **Owners may read `reports` only when `status == 'FINALIZED'`.** Backend enforces this access control.
+- Owners are read-only for raw analyses — backend ensures owner access never exposes raw analysis data.
 
 ---
 
 ## AI flow & prompt guidance (be precise) 🤖
 - Use `callGenkit({ model: 'gemini-2.5-flash', prompt, maxTokens })` and handle `{ success, data, error }`.
-- Enforce JSON-only responses in prompts (e.g., "Only return valid JSON"), then validate by JSON.parse and shape-check before writing results to Firestore.
+- Enforce JSON-only responses in prompts (e.g., "Only return valid JSON"), then validate by JSON.parse and shape-check before returning to Server Actions.
 - Avoid speculative language in prompts; require professional, factual tone. Example in repo: `draftExecutiveSummary.ts` prompt.
 - Validate AI output shapes strictly: e.g., `suggestHypotheses` expects [{text:string, confidence:number, evidence:string[]}].
 
 ---
 
 ## Dev & run notes (commands & env) ⚡
-- Copy `.env.example` to `.env.local` and set:
+- Backend: Copy `backend/.env.example` to `backend/.env` and configure database path
+- Frontend: Copy `.env.local.example` to `.env.local` and set:
+  - `NEXT_PUBLIC_API_URL=http://localhost:8000` (PHP backend URL)
   - `GENKIT_API_KEY` (required for AI flows)
-  - `FIREBASE_ADMIN_CREDENTIALS` (JSON string for admin SDK or rely on ADC during dev)
-  - `NEXT_PUBLIC_FIREBASE_*` (client config)
 - Common commands:
-  - `npm install`
+  - Frontend: `npm install` and `npm run dev`
+  - Backend: `cd backend && php -S localhost:8000 -t public router.php`
+  - Database: `cd backend && php bin/migrate.php && php bin/seed.php`
   - `npm run dev` (Next dev server)
   - `npm run test:unit` (unit tests)
   - `npm run test:integration` (integration tests against emulator)
@@ -59,44 +63,42 @@ Purpose: short, actionable guidance so AI coding agents can be productive immedi
 ---
 
 ## When adding features or fixing bugs (checklist) ✅
-- Update `src/lib/types.ts` for any model changes.
-- Update `firestore.rules` to reflect access changes.
+- Update `src/lib/types.ts` for any model changes and keep in sync with `backend/src/Models/`.
+- Update PHP backend models, controllers, and migrations as needed.
 - Add/modify Server Actions in `src/app/actions.ts` and re-validate permissions with `src/lib/auth.ts`.
+- Ensure Server Actions call PHP backend via `callPhpApi` from `src/lib/api.ts`.
 - If adding new AI flows, put them under `src/ai/flows/`, call `callGenkit` from `src/ai/genkit.ts`, enforce JSON-only responses, and add parsing + validation tests.
-- Add/adjust `statusHistory` entries for any lifecycle state changes.
-- Ensure Owners cannot see raw analyses (update rules + server-side checks).
+- Add/adjust `statusHistory` entries for any lifecycle state changes in the database.
+- Ensure Owners cannot see raw analyses (enforce in backend controllers).
 
 ---
 
 ## Server Action templates & tests (examples) 🔧
-- Pattern: Server Actions must re-validate permissions with `assertHasRole` / `assertAtLeastRole`, perform server-side checks, update Firestore atomically, and append `statusHistory` using `admin.firestore.FieldValue.arrayUnion(...)`.
+- Pattern: Server Actions must re-validate permissions with `assertHasRole` / `assertAtLeastRole`, then call PHP backend APIs via `callPhpApi`.
 
 - Example (submit analysis):
 ```ts
-export async function submitAnalysis(employeeUid: string, analysisId: string) {
-  await assertHasRole(employeeUid, 'employee');
-  const snap = await adminFirestore.collection('analyses').doc(analysisId).get();
-  if (!snap.exists) throw new Error('Analysis not found');
-  const analysis = snap.data() as Analysis;
-  if (analysis.author !== employeeUid) throw new Error('Not the author');
-  if (analysis.status !== 'DRAFT') throw new Error('Only DRAFT can be submitted');
+export async function submitAnalysis(analysisId: string) {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'EMPLOYEE');
 
-  // compute readiness and require >=75
-  const score = computeReadiness(analysis);
-  if (score < 75) throw new Error('Readiness score must be ≥ 75 to submit');
+  const response = await callPhpApi('POST', `/analyses/${analysisId}/submit`);
+  if (!response.success) throw new Error(response.error || 'Failed to submit analysis');
 
-  const now = Date.now();
-  const statusEntry = { status: 'SUBMITTED', changedAt: now, changedBy: employeeUid };
-  await adminFirestore.collection('analyses').doc(analysisId).update({ status: 'SUBMITTED', readinessScore: score, updatedAt: now, statusHistory: admin.firestore.FieldValue.arrayUnion(statusEntry) });
+  return response.data;
 }
 ```
 
-- Example (manager review → approve & draft report):
+- Example (manager review):
 ```ts
-export async function managerReviewAnalysis(managerUid, analysisId, action) {
-  await assertHasRole(managerUid, 'manager');
-  // verify submitted, then update statusHistory via admin.firestore.FieldValue.arrayUnion
-  // If APPROVE: call AI flow `draftExecutiveSummary(...)` from `src/ai/flows` and create a `reports` draft entry with `executiveSummaryDraft` filled.
+export async function managerReviewAnalysis(analysisId: string, action: 'APPROVE' | 'REJECT') {
+  const session = await requireSessionUser();
+  await assertHasRole(session.uid, 'MANAGER');
+
+  const response = await callPhpApi('POST', `/analyses/${analysisId}/review`, { action });
+  if (!response.success) throw new Error(response.error || 'Failed to review analysis');
+
+  return response.data;
 }
 ```
 
@@ -116,7 +118,9 @@ export async function managerReviewAnalysis(managerUid, analysisId, action) {
 - Genkit failures: `src/ai/genkit.ts` returns `success: false` with `error`. Surface meaningful errors to logs and do not commit partial AI outputs to DB.
 - Parsing errors: AI sometimes returns non-JSON; flows currently wrap parse in try/catch and throw `Failed to parse Genkit output...` — add richer logging when needed.
 - Auth/role issues: verify custom claims or `users` collection data (used by `hasRole()` in rules) and `adminFirestore` contents.
-
----
-
+.
+- Parsing errors: AI sometimes returns non-JSON; flows currently wrap parse in try/catch and throw `Failed to parse Genkit output...` — add richer logging when needed.
+- Auth/role issues: verify session cookies and backend user data in SQLite database.
+- API errors: Check PHP backend logs in `backend/logs/` directory.
+- Database issues: Verify SQLite database exists at `backend/database.sqlite`
 If anything here is unclear or you want additional examples (e.g., full Server Action templates for submit/review/report flows), say which area you want expanded and I will update this document.

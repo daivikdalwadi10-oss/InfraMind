@@ -31,9 +31,7 @@
         "src/*"
       ]
     },
-    "types": [
-      "vitest/globals"
-    ]
+    "types": []
   },
   "include": [
     "**/*.ts",

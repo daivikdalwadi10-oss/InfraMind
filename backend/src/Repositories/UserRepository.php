@@ -8,6 +8,7 @@ use InfraMind\Core\Database;
 use InfraMind\Models\User;
 use InfraMind\Models\UserRole;
 use InfraMind\Exceptions\NotFoundException;
+use InfraMind\Utils\Utils;
 
 /**
  * User repository for database operations.
@@ -87,8 +88,8 @@ class UserRepository
      */
     public function recordLogin(string $userId): void
     {
-        $sql = "UPDATE users SET last_login_at = datetime(\"now\") WHERE id = ?";
-        $this->db->execute($sql, [$userId]);
+        $sql = 'UPDATE users SET last_login_at = ? WHERE id = ?';
+        $this->db->execute($sql, [Utils::now(), $userId]);
     }
 
     /**
@@ -96,8 +97,8 @@ class UserRepository
      */
     public function delete(string $userId): void
     {
-        $sql = "UPDATE users SET deleted_at = datetime(\"now\") WHERE id = ?";
-        $this->db->execute($sql, [$userId]);
+        $sql = 'UPDATE users SET deleted_at = ? WHERE id = ?';
+        $this->db->execute($sql, [Utils::now(), $userId]);
     }
 
     /**

@@ -1,0 +1,76 @@
+InfraMind DB Verification
+
+Tables
+
+table_name             
+----------             
+analyses               
+analysis_hypotheses    
+analysis_revisions     
+analysis_status_history
+audit_logs             
+reports                
+tasks                  
+users                  
+
+
+
+
+Foreign keys
+
+foreign_key                   parent_table            referenced_table
+-----------                   ------------            ----------------
+FK_analyses_employee_id       analyses                users           
+FK_analyses_task_id           analyses                tasks           
+FK_hypotheses_analysis_id     analysis_hypotheses     analyses        
+FK_reports_analysis_id        reports                 analyses        
+FK_reports_created_by         reports                 users           
+FK_revisions_analysis_id      analysis_revisions      analyses        
+FK_revisions_created_by       analysis_revisions      users           
+FK_status_history_analysis_id analysis_status_history analyses        
+FK_status_history_changed_by  analysis_status_history users           
+FK_tasks_assigned_to          tasks                   users           
+FK_tasks_created_by           tasks                   users           
+
+
+
+
+Row counts
+
+table_name              row_count
+----------              ---------
+analyses                        0
+analysis_hypotheses             0
+analysis_revisions              0
+analysis_status_history         0
+audit_logs                      0
+reports                         0
+tasks                           0
+users                           0
+
+
+
+
+Check constraints
+
+check_name                   table_name             
+----------                   ----------             
+CK_analyses_hypotheses_json  analyses               
+CK_analyses_readiness        analyses               
+CK_analyses_signals_json     analyses               
+CK_analyses_status           analyses               
+CK_analyses_symptoms_json    analyses               
+CK_analyses_type             analyses               
+CK_hypotheses_confidence     analysis_hypotheses    
+CK_hypotheses_evidence_json  analysis_hypotheses    
+CK_revisions_hypotheses_json analysis_revisions     
+CK_revisions_readiness       analysis_revisions     
+CK_revisions_signals_json    analysis_revisions     
+CK_revisions_symptoms_json   analysis_revisions     
+CK_status_history_status     analysis_status_history
+CK_audit_logs_changes_json   audit_logs             
+CK_tasks_status              tasks                  
+CK_users_role                users                  
+
+
+

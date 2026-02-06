@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace InfraMind\Repositories;
 
 use InfraMind\Core\Database;
+use InfraMind\Utils\Utils;
 
 /**
  * Audit log repository for tracking all state changes.
@@ -29,7 +30,7 @@ class AuditLogRepository
         array $changes = [],
     ): void {
         $sql = 'INSERT INTO audit_logs (entity_type, entity_id, action, user_id, changes, created_at)
-                VALUES (?, ?, ?, ?, ?, datetime("now"))';
+                VALUES (?, ?, ?, ?, ?, ?)';
 
         $this->db->execute($sql, [
             $entityType,
@@ -37,6 +38,7 @@ class AuditLogRepository
             $action,
             $userId,
             json_encode($changes),
+            Utils::now(),
         ]);
     }
 

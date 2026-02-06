@@ -11,135 +11,215 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use InfraMind\Core\Config;
 use InfraMind\Core\Database;
 use InfraMind\Core\Logger;
-use InfraMind\Services\AuthService;
-use InfraMind\Services\TaskService;
-use InfraMind\Services\AnalysisService;
+use InfraMind\Core\PasswordManager;
 
 // Load environment
 Config::load(__DIR__ . '/../.env');
 
 $logger = Logger::getInstance();
 
+function generateId(): string {
+    return bin2hex(random_bytes(18));
+}
+
 try {
     $logger->info('Starting database seeding...');
 
     $db = Database::getInstance();
-    $authService = new AuthService();
+    $now = date('Y-m-d H:i:s');
 
-    // Clear existing data (for testing - commented out for safety)
-    // $db->execute('DELETE FROM analysis_revisions');
-    // $db->execute('DELETE FROM analysis_status_history');
-    // $db->execute('DELETE FROM analysis_hypotheses');
-    // $db->execute('DELETE FROM reports');
-    // $db->execute('DELETE FROM analyses');
-    // $db->execute('DELETE FROM tasks');
-    // $db->execute('DELETE FROM users');
+    // For SQLite, disable foreign keys during seeding
+    $driver = $_ENV['DB_DRIVER'] ?? 'mysql';
+    if ($driver === 'sqlite') {
+        $db->getConnection()->exec('PRAGMA foreign_keys = OFF;');
+        $logger->info('SQLite: Disabled foreign keys for seeding');
+    }
 
-    // Create test users
+    $existingUsers = $db->fetchOne('SELECT COUNT(*) AS count FROM users');
+    if ($existingUsers && (int) ($existingUsers['count'] ?? 0) > 0) {
+        echo "Users already exist. Skipping seed data.\n";
+        exit(0);
+    }
+
+    // Create test users using direct INSERT to avoid service layer issues
     echo "Creating test users...\n";
 
-    $owner = $authService->signup('owner@example.com', 'Owner123!@#', 'Alice Owner', 'OWNER');
-    echo "✓ Owner: " . $owner->email . "\n";
+    $ownerId = generateId();
+    $managerId = generateId();
+    $employee1Id = generateId();
+    $employee2Id = generateId();
 
-    $manager = $authService->signup('manager@example.com', 'Manager123!@#', 'Bob Manager', 'MANAGER');
-    echo "✓ Manager: " . $manager->email . "\n";
+    $passwordManager = new PasswordManager();
+    
+    $ownerHash = $passwordManager->hash('Owner123!@#');
+    $managerHash = $passwordManager->hash('Manager123!@#');
+    $employee1Hash = $passwordManager->hash('Employee123!@#');
+    $employee2Hash = $passwordManager->hash('Employee123!@#');
 
-    $employee1 = $authService->signup('employee1@example.com', 'Employee123!@#', 'Charlie Employee', 'EMPLOYEE');
-    echo "✓ Employee 1: " . $employee1->email . "\n";
+    // Insert users
+    $db->execute(
+        'INSERT INTO users (id, email, password_hash, role, display_name, created_at, updated_at, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [$ownerId, 'owner@example.com', $ownerHash, 'OWNER', 'Alice Owner', $now, $now, 1]
+    );
+    echo "✓ Owner: owner@example.com\n";
 
-    $employee2 = $authService->signup('employee2@example.com', 'Employee123!@#', 'Diana Employee', 'EMPLOYEE');
-    echo "✓ Employee 2: " . $employee2->email . "\n";
+    $db->execute(
+        'INSERT INTO users (id, email, password_hash, role, display_name, created_at, updated_at, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [$managerId, 'manager@example.com', $managerHash, 'MANAGER', 'Bob Manager', $now, $now, 1]
+    );
+    echo "✓ Manager: manager@example.com\n";
+
+    $db->execute(
+        'INSERT INTO users (id, email, password_hash, role, display_name, created_at, updated_at, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [$employee1Id, 'employee1@example.com', $employee1Hash, 'EMPLOYEE', 'Charlie Employee', $now, $now, 1]
+    );
+    echo "✓ Employee 1: employee1@example.com\n";
+
+    $db->execute(
+        'INSERT INTO users (id, email, password_hash, role, display_name, created_at, updated_at, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [$employee2Id, 'employee2@example.com', $employee2Hash, 'EMPLOYEE', 'Diana Employee', $now, $now, 1]
+    );
+    echo "✓ Employee 2: employee2@example.com\n";
 
     // Create tasks
     echo "\nCreating test tasks...\n";
 
-    $taskService = new TaskService();
+    $task1Id = generateId();
+    $task2Id = generateId();
 
-    $task1 = $taskService->createTask(
-        $manager->id,
-        'Investigate API Latency',
-        'The user-facing API has been experiencing increased latency. Investigate root cause and recommend solutions.',
-        $employee1->id,
+    $db->execute(
+        'INSERT INTO tasks (id, title, description, created_by, assigned_to, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+            $task1Id,
+            'Investigate API Latency',
+            'The user-facing API has been experiencing increased latency. Investigate root cause and recommend solutions.',
+            $managerId,
+            $employee1Id,
+            'IN_PROGRESS',
+            $now,
+            $now
+        ]
     );
-    echo "✓ Task 1: " . $task1->title . " (assigned to " . $employee1->displayName . ")\n";
+    echo "✓ Task 1: Investigate API Latency\n";
 
-    $task2 = $taskService->createTask(
-        $manager->id,
-        'Review Database Security',
-        'Conduct comprehensive security review of database infrastructure and access controls.',
-        $employee2->id,
+    $db->execute(
+        'INSERT INTO tasks (id, title, description, created_by, assigned_to, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+            $task2Id,
+            'Review Database Security',
+            'Conduct comprehensive security review of database infrastructure and access controls.',
+            $managerId,
+            $employee2Id,
+            'OPEN',
+            $now,
+            $now
+        ]
     );
-    echo "✓ Task 2: " . $task2->title . " (assigned to " . $employee2->displayName . ")\n";
+    echo "✓ Task 2: Review Database Security\n";
 
     // Create analyses
     echo "\nCreating test analyses...\n";
 
-    $analysisService = new AnalysisService();
+    $analysis1Id = generateId();
+    $analysis2Id = generateId();
 
-    $analysis1 = $analysisService->createAnalysis(
-        $employee1->id,
-        $task1->id,
-        'LATENCY',
-    );
-    echo "✓ Analysis 1 created for task: " . $task1->title . "\n";
+    $symptoms = json_encode([
+        'High response times on user endpoint',
+        'Database connections timing out',
+        'Memory pressure on API servers'
+    ]);
 
-    // Update analysis with content
-    $analysis1 = $analysisService->updateAnalysisContent(
-        $analysis1->id,
-        $employee1->id,
-        ['High response times on user endpoint', 'Database connections timing out', 'Memory pressure on API servers'],
-        ['CPU utilization >90%', 'Database query time 5s+', 'Cache hit rate <20%'],
+    $signals = json_encode([
+        'CPU utilization >90%',
+        'Database query time 5s+',
+        'Cache hit rate <20%'
+    ]);
+
+    $hypotheses = json_encode([
+        ['text' => 'Database queries unoptimized', 'confidence' => 85, 'evidence' => ['slow queries in logs']],
+        ['text' => 'Connection pool exhausted', 'confidence' => 70, 'evidence' => ['connection timeout errors']],
+        ['text' => 'Cache invalidation issue', 'confidence' => 45, 'evidence' => ['low hit rates']]
+    ]);
+
+    $db->execute(
+        'INSERT INTO analyses (id, task_id, employee_id, status, analysis_type, symptoms, signals, hypotheses, readiness_score, revision_count, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
-            ['text' => 'Database queries unoptimized', 'confidence' => 85, 'evidence' => ['slow queries in logs']],
-            ['text' => 'Connection pool exhausted', 'confidence' => 70, 'evidence' => ['connection timeout errors']],
-            ['text' => 'Cache invalidation issue', 'confidence' => 45, 'evidence' => ['low hit rates']],
-        ],
-        82,
+            $analysis1Id,
+            $task1Id,
+            $employee1Id,
+            'SUBMITTED',
+            'LATENCY',
+            $symptoms,
+            $signals,
+            $hypotheses,
+            82,
+            1,
+            $now,
+            $now
+        ]
     );
-    echo "  - Analysis 1 updated with content (readiness: 82%)\n";
+    echo "✓ Analysis 1 created (LATENCY, readiness: 82%)\n";
 
-    // Submit analysis
-    $analysis1 = $analysisService->submitAnalysis($analysis1->id, $employee1->id);
-    echo "  - Analysis 1 submitted by employee\n";
-
-    // Manager reviews
-    $analysis1 = $analysisService->reviewAnalysis(
-        $analysis1->id,
-        $manager->id,
-        'APPROVE',
+    // Add status history for analysis 1
+    $statusHistoryId = generateId();
+    $db->execute(
+        'INSERT INTO analysis_status_history (id, analysis_id, status, changed_by, changed_at) VALUES (?, ?, ?, ?, ?)',
+        [$statusHistoryId, $analysis1Id, 'SUBMITTED', $employee1Id, $now]
     );
-    echo "  - Analysis 1 approved by manager\n";
 
-    // Create second analysis in draft state
-    $analysis2 = $analysisService->createAnalysis(
-        $employee2->id,
-        $task2->id,
-        'SECURITY',
-    );
-    echo "✓ Analysis 2 created for task: " . $task2->title . "\n";
+    $symptoms2 = json_encode([
+        'Unauthorized access attempts detected',
+        'Missing encryption on data at rest',
+        'Weak password policies'
+    ]);
 
-    $analysis2 = $analysisService->updateAnalysisContent(
-        $analysis2->id,
-        $employee2->id,
-        ['Weak password policy', 'No multi-factor authentication', 'Database exposed to all internal networks'],
-        ['Plaintext passwords in logs', 'Default credentials still active', 'No audit logging'],
+    $signals2 = json_encode([
+        'Failed login attempts spike',
+        'Plaintext passwords in logs',
+        'No 2FA requirement'
+    ]);
+
+    $hypotheses2 = json_encode([
+        ['text' => 'Brute force attack vector', 'confidence' => 80, 'evidence' => ['IP block lists', 'login audit trail']],
+        ['text' => 'Missing TLS enforcement', 'confidence' => 75, 'evidence' => ['protocol analysis']],
+        ['text' => 'Insufficient access controls', 'confidence' => 90, 'evidence' => ['role-based access review']]
+    ]);
+
+    $db->execute(
+        'INSERT INTO analyses (id, task_id, employee_id, status, analysis_type, symptoms, signals, hypotheses, readiness_score, revision_count, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
-            ['text' => 'Weak password requirements', 'confidence' => 90, 'evidence' => ['policy review']],
-            ['text' => 'No 2FA enforcement', 'confidence' => 95, 'evidence' => ['system inspection']],
-        ],
-        65,
+            $analysis2Id,
+            $task2Id,
+            $employee2Id,
+            'DRAFT',
+            'SECURITY',
+            $symptoms2,
+            $signals2,
+            $hypotheses2,
+            65,
+            0,
+            $now,
+            $now
+        ]
     );
-    echo "  - Analysis 2 in progress (readiness: 65%)\n";
+    echo "✓ Analysis 2 created (SECURITY, readiness: 65%)\n";
 
-    $logger->info('Database seeding completed successfully');
-    echo "\n✅ Seeding complete!\n";
-    echo "Test credentials:\n";
-    echo "  Owner: owner@example.com / Owner123!@#\n";
-    echo "  Manager: manager@example.com / Manager123!@#\n";
-    echo "  Employee 1: employee1@example.com / Employee123!@#\n";
-    echo "  Employee 2: employee2@example.com / Employee123!@#\n";
-} catch (\Exception $e) {
-    $logger->critical('Seeding failed: ' . $e->getMessage());
+    // Re-enable foreign keys for SQLite
+    if ($driver === 'sqlite') {
+        $db->getConnection()->exec('PRAGMA foreign_keys = ON;');
+        $logger->info('SQLite: Re-enabled foreign keys after seeding');
+    }
+
+    echo "\n✅ Database seeding completed successfully!\n";
+    echo "\nTest Credentials:\n";
+    echo "  Owner:     owner@example.com / Owner123!@#\n";
+    echo "  Manager:   manager@example.com / Manager123!@#\n";
+    echo "  Employee1: employee1@example.com / Employee123!@#\n";
+    echo "  Employee2: employee2@example.com / Employee123!@#\n";
+
+} catch (Exception $e) {
+    $logger->critical('Database seeding failed: ' . $e->getMessage());
     fwrite(STDERR, "Error: " . $e->getMessage() . "\n");
+    fwrite(STDERR, $e->getTraceAsString() . "\n");
     exit(1);
 }

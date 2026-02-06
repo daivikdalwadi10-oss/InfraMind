@@ -10,33 +10,31 @@ jobs:
   notify:
     if: github.event.workflow_run.conclusion == 'failure'
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    
     steps:
       - name: Create GitHub issue about CI failure
         uses: actions/github-script@v7
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const run = context.payload.workflow_run;
             const title = `CI failure: ${run.name} (${run.head_branch})`;
-            const body = `Workflow **${run.name}** failed on branch **${run.head_branch}**\n\nCheck details: ${run.html_url}`;
-            await github.rest.issues.create({ owner: context.repo.owner, repo: context.repo.repo, title, body });
-      - name: Send Slack notification
-        if: always()
-        continue-on-error: true
-        uses: slackapi/slack-github-action@v1.24.0
-        with:
-          payload: |
-            {
-              "text": "CI Failure: ${{ github.event.workflow_run.name }} on branch ${{ github.event.workflow_run.head_branch }}",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*CI Failure* on branch `${{ github.event.workflow_run.head_branch }}`\n<${{ github.event.workflow_run.html_url }}|View details>"
-                  }
-                }
-              ]
+            const body = `Workflow **${run.name}** failed\n\n**Branch:** ${run.head_branch}\n**Commit:** ${run.head_commit}\n\n[View workflow details →](${run.html_url})`;
+            
+            try {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['bug', 'ci']
+              });
+              console.log('✓ Issue created for CI failure');
+            } catch (error) {
+              console.log('Issue creation skipped:', error.message);
             }
-        env:
-          # SLACK_WEBHOOK_URL is optional - action handles gracefully if not provided
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+      
+
+

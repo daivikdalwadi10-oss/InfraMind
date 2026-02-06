@@ -56,17 +56,28 @@ class Database
                     ]
                 );
             } else {
+                $user = $_ENV['DB_USER'] ?? 'root';
+                $password = $_ENV['DB_PASSWORD'] ?? '';
+                if ($this->driver === 'sqlsrv' && $user === '') {
+                    $user = null;
+                    $password = null;
+                }
+
+                $options = [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false,
+                ];
+                if ($this->driver !== 'sqlsrv') {
+                    $options[PDO::ATTR_PERSISTENT] = false;
+                    $options[PDO::ATTR_TIMEOUT] = $this->connectTimeout;
+                }
+
                 $this->pdo = new PDO(
                     $dsn,
-                    $_ENV['DB_USER'] ?? 'root',
-                    $_ENV['DB_PASSWORD'] ?? '',
-                    [
-                        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                        PDO::ATTR_EMULATE_PREPARES => false,
-                        PDO::ATTR_PERSISTENT => false,
-                        PDO::ATTR_TIMEOUT => $this->connectTimeout,
-                    ]
+                    $user,
+                    $password,
+                    $options
                 );
             }
 
@@ -96,10 +107,18 @@ class Database
         $host = $_ENV['DB_HOST'] ?? 'localhost';
         $port = $_ENV['DB_PORT'] ?? 3306;
         $dbName = $_ENV['DB_NAME'] ?? 'inframind';
+        $encrypt = $_ENV['DB_ENCRYPT'] ?? 'true';
+        $trustCert = $_ENV['DB_TRUST_CERT'] ?? 'true';
+
+        $server = $host;
+        if (!empty($port)) {
+            $server = $server . ',' . $port;
+        }
 
         return match ($this->driver) {
             'mysql' => "mysql:host=$host;port=$port;dbname=$dbName",
             'pgsql' => "pgsql:host=$host;port=$port;dbname=$dbName",
+            'sqlsrv' => "sqlsrv:Server=$server;Database=$dbName;Encrypt=$encrypt;TrustServerCertificate=$trustCert",
             default => throw new \RuntimeException("Unsupported database driver: {$this->driver}"),
         };
     }

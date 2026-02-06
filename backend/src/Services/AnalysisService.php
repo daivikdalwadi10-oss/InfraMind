@@ -10,6 +10,7 @@ use InfraMind\Repositories\TaskRepository;
 use InfraMind\Models\Analysis;
 use InfraMind\Models\AnalysisStatus;
 use InfraMind\Models\AnalysisType;
+use InfraMind\Utils\Utils;
 use InfraMind\Exceptions\NotFoundException;
 use InfraMind\Exceptions\AuthorizationException;
 use InfraMind\Exceptions\InvalidStateException;
@@ -297,7 +298,7 @@ class AnalysisService
     }
 
     /**
-     * Record status change in audit table.
+    * Record status change in audit table.
      */
     private function recordStatusChange(
         string $analysisId,
@@ -306,9 +307,9 @@ class AnalysisService
         string $action,
     ): void {
         $stmt = $this->db->execute(
-            'INSERT INTO analysis_status_history (analysis_id, status, changed_by, action, changed_at)
-             VALUES (?, ?, ?, ?, datetime("now"))',
-            [$analysisId, $status->value, $userId, $action]
+            'INSERT INTO analysis_status_history (analysis_id, status, changed_by, details, changed_at)
+             VALUES (?, ?, ?, ?, ?)',
+            [$analysisId, $status->value, $userId, $action, Utils::now()]
         );
     }
 

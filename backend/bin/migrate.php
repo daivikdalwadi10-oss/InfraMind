@@ -17,19 +17,35 @@ use InfraMind\Core\Logger;
 Config::load(__DIR__ . '/../.env');
 
 try {
-    $db = Database::getInstance();
     $logger = Logger::getInstance();
+    $db = Database::getInstance();
 
     $logger->info('Starting database migration...');
 
-    // Get migration files
+    // Get migration files based on driver
     $migrationDir = __DIR__ . '/../database/migrations';
-    $migrations = glob($migrationDir . '/*.sql');
+    $driver = $_ENV['DB_DRIVER'] ?? 'mysql';
+
+    $pattern = match ($driver) {
+        'sqlite' => '*_initial_schema.sql',
+        'mysql' => '*_mysql_schema.sql',
+        'sqlsrv' => '*_sqlserver_schema.sql',
+        default => '*.sql',
+    };
+
+    $migrations = glob($migrationDir . '/' . $pattern);
     sort($migrations);
 
     if (empty($migrations)) {
         $logger->warning('No migration files found');
         exit(0);
+    }
+
+    // For SQLite, disable foreign key constraints during migration
+    $driver = $_ENV['DB_DRIVER'] ?? 'mysql';
+    if ($driver === 'sqlite') {
+        $db->getConnection()->exec('PRAGMA foreign_keys = OFF;');
+        $logger->info('SQLite: Disabled foreign keys for migration');
     }
 
     foreach ($migrations as $migrationFile) {
@@ -41,8 +57,14 @@ try {
             throw new RuntimeException("Failed to read migration file: $migrationFile");
         }
 
-        // Split by semicolon to handle multiple statements
-        $statements = array_filter(array_map('trim', explode(';', $sql)));
+        // Remove comments and split by statement separators
+        $sql = preg_replace('/--.*$/m', '', $sql);
+        if ($driver === 'sqlsrv') {
+            $statements = preg_split('/^\s*GO\s*$/mi', $sql) ?: [];
+        } else {
+            $statements = explode(';', $sql);
+        }
+        $statements = array_filter(array_map('trim', $statements));
 
         foreach ($statements as $statement) {
             if (!empty($statement)) {
@@ -56,6 +78,12 @@ try {
         }
 
         $logger->info("Completed migration: $migrationName");
+    }
+
+    // Re-enable foreign keys for SQLite
+    if ($driver === 'sqlite') {
+        $db->getConnection()->exec('PRAGMA foreign_keys = ON;');
+        $logger->info('SQLite: Re-enabled foreign keys after migration');
     }
 
     $logger->info('Database migration completed successfully');

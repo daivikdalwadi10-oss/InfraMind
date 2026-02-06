@@ -28,7 +28,25 @@ error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
 // Force language settings
-putenv('ADMINER_DEFAULT_SERVER=sqlite');
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use InfraMind\Core\Config;
+
+Config::load(__DIR__ . '/../.env');
+
+$driver = $_ENV['DB_DRIVER'] ?? 'sqlite';
+$host = $_ENV['DB_HOST'] ?? 'localhost';
+$port = $_ENV['DB_PORT'] ?? '';
+$server = $host;
+if ($port !== '') {
+    $server = $server . ($driver === 'sqlsrv' ? ',' : ':') . $port;
+}
+
+putenv('ADMINER_DEFAULT_SERVER=' . ($driver === 'sqlite' ? 'sqlite' : $server));
+if (!isset($_GET['driver']) && $driver === 'sqlsrv') {
+    $_GET['driver'] = 'mssql';
+}
+
 $_GET['lang'] = 'en';
 $_SERVER['REQUEST_METHOD'] = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 

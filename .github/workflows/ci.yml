@@ -14,23 +14,32 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: '18'
+          cache: 'npm'
+      
       - name: Install dependencies
         run: npm ci
+      
       - name: Lint
         run: npm run lint
+      
       - name: Run typecheck
         run: npm run typecheck
+      
       - name: Build
         run: npm run build
+      
       - name: Run unit tests
         run: npm run test:unit
-      - name: Run unit tests with coverage (artifact)
+      
+      - name: Run unit tests with coverage
         continue-on-error: true
         run: npm run test:unit:coverage
+      
       - name: Upload coverage artifact
         if: always() && hashFiles('coverage/lcov.info') != ''
         continue-on-error: true
@@ -38,6 +47,7 @@ jobs:
         with:
           name: coverage-lcov
           path: coverage/lcov.info
+      
       - name: Upload to Codecov
         if: always() && hashFiles('coverage/lcov.info') != ''
         continue-on-error: true
@@ -52,29 +62,44 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    
     steps:
       - uses: actions/checkout@v4
+      
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: '18'
+          cache: 'npm'
+      
       - name: Install dependencies
         run: npm ci
-      - name: Run integration tests (start Firestore emulator and retry)
-        continue-on-error: true
+      
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+      
+      - name: Install PHP dependencies
+        run: cd backend && composer install
+      
+      - name: Setup database
         run: |
-          set -e
-          npm install -g firebase-tools || true
-          for i in 1 2 3; do
-            echo "Integration test attempt $i"
-            # Run tests inside emulator lifecycle so initializeTestEnvironment discovers emulator
-            npx firebase emulators:exec "npm run test:integration" && break || true
-            if [ $i -eq 3 ]; then
-              echo "Integration tests failed after 3 attempts (non-blocking)"; exit 0
-            fi
-            echo "Retrying in $((i * 10))s..."; sleep $((i * 10))
-          done
+          cd backend
+          php bin/migrate.php
+          php bin/seed.php
+      
+      - name: Start PHP backend
+        run: |
+          cd backend
+          php -S localhost:8000 -t public router.php &
+          sleep 2
+      
+      - name: Run integration tests
+        continue-on-error: true
         env:
-          FIREBASE_AUTH_EMULATOR_HOST: localhost:9099
-          FIRESTORE_EMULATOR_HOST: localhost:8080
+          NEXT_PUBLIC_API_URL: http://localhost:8000
+        run: |
+          npm run test:integration || exit 0
+
 

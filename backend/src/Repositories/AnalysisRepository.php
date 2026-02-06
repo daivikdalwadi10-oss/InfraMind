@@ -8,6 +8,7 @@ use InfraMind\Core\Database;
 use InfraMind\Models\Analysis;
 use InfraMind\Models\AnalysisStatus;
 use InfraMind\Models\AnalysisType;
+use InfraMind\Utils\Utils;
 
 /**
  * Analysis repository for database operations.
@@ -81,7 +82,7 @@ class AnalysisRepository
     {
         $sql = 'UPDATE analyses SET
                     status = ?, readiness_score = ?, manager_feedback = ?,
-                    revision_count = ?, updated_at = datetime("now")
+                    revision_count = ?, updated_at = ?
                 WHERE id = ?';
 
         $this->db->execute($sql, [
@@ -89,6 +90,7 @@ class AnalysisRepository
             $analysis->readinessScore,
             $analysis->managerFeedback,
             $analysis->revisionCount,
+            Utils::now(),
             $analysis->id,
         ]);
 
@@ -100,12 +102,13 @@ class AnalysisRepository
      */
     public function updateContent(string $id, array $symptoms, array $signals, array $hypotheses): void
     {
-        $sql = "UPDATE analyses SET symptoms = ?, signals = ?, hypotheses = ?, updated_at = datetime(\"now\") WHERE id = ?";
+        $sql = 'UPDATE analyses SET symptoms = ?, signals = ?, hypotheses = ?, updated_at = ? WHERE id = ?';
 
         $this->db->execute($sql, [
             json_encode($symptoms),
             json_encode($signals),
             json_encode($hypotheses),
+            Utils::now(),
             $id,
         ]);
     }

@@ -20,8 +20,12 @@ class CorsMiddleware implements Middleware
 
         $origins = explode(',', \InfraMind\Core\Config::get('CORS_ORIGINS', 'http://localhost:3000'));
         $requestOrigin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $isDev = \InfraMind\Core\Config::get('APP_ENV', 'development') === 'development';
 
         $allowedOrigin = in_array($requestOrigin, array_map('trim', $origins), true) ? $requestOrigin : '';
+        if ($isDev && $requestOrigin) {
+            $allowedOrigin = $requestOrigin;
+        }
 
         $response = $next($request);
 
