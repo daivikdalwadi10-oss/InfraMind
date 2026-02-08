@@ -69,7 +69,7 @@ export default function ReviewsPage() {
                 {analyses.map((analysis) => (
                   <Card key={analysis.id}>
                     <CardHeader>
-                      <CardTitle>Analysis {analysis.id}</CardTitle>
+                      <CardTitle>{analysis.title ? analysis.title : `Analysis ${analysis.id}`}</CardTitle>
                       <CardDescription>Task {analysis.taskId}</CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-wrap items-center gap-2">

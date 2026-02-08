@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { AppShell } from '@/components/AppShell';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,9 @@ import { canReviewAnalysis } from '@/lib/auth';
 import { useSession } from '@/hooks/useSession';
 import type { Analysis } from '@/lib/types';
 
-export default function ReviewDetailPage({ params }: { params: { id: string } }) {
+export default function ReviewDetailPage() {
   const router = useRouter();
+  const params = useParams<{ id: string | string[] }>();
   const { user, accessToken, status } = useSession();
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [loading, setLoading] = useState(false);
@@ -23,12 +24,18 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
   const role = user?.role ?? null;
   const canReview = analysis ? canReviewAnalysis(role, analysis.status) : false;
 
+  const analysisId = useMemo(() => {
+    if (!params?.id) return null;
+    return Array.isArray(params.id) ? params.id[0] : params.id;
+  }, [params]);
+
   useEffect(() => {
     if (status !== 'authenticated' || !accessToken) return;
+    if (!analysisId) return;
     const loadAnalysis = async () => {
       setLoading(true);
       setError(null);
-      const response = await apiRequest<Analysis>('GET', `/analyses/${params.id}`, undefined, accessToken);
+      const response = await apiRequest<Analysis>('GET', `/analyses/${analysisId}`, undefined, accessToken);
       if (!response.success || !response.data) {
         setError(response.error || 'Unable to load analysis.');
         setAnalysis(null);
@@ -40,7 +47,7 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
     };
 
     void loadAnalysis();
-  }, [status, accessToken, params.id]);
+  }, [status, accessToken, analysisId]);
 
   const handleDecision = async (decision: 'APPROVE' | 'REJECT') => {
     if (!analysis || !accessToken) return;
@@ -86,7 +93,7 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
         {analysis ? (
           <Card>
             <CardHeader>
-              <CardTitle>Analysis {analysis.id}</CardTitle>
+              <CardTitle>{analysis.title ? analysis.title : `Analysis ${analysis.id}`}</CardTitle>
               <CardDescription>Task {analysis.taskId}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -108,6 +115,36 @@ export default function ReviewDetailPage({ params }: { params: { id: string } })
                   <p className="text-xs uppercase text-muted">Hypotheses</p>
                   <pre className="whitespace-pre-wrap text-sm text-ink">
                     {(analysis.hypotheses || []).map((item) => item.text).join('\n') || 'No hypotheses'}
+                  </pre>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-xs uppercase text-muted">Environment context</p>
+                  <pre className="whitespace-pre-wrap text-sm text-ink">
+                    {analysis.environmentContext
+                      ? JSON.stringify(analysis.environmentContext, null, 2)
+                      : 'No environment context'}
+                  </pre>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-xs uppercase text-muted">Timeline of events</p>
+                  <pre className="whitespace-pre-wrap text-sm text-ink">
+                    {analysis.timelineEvents ? JSON.stringify(analysis.timelineEvents, null, 2) : 'No timeline'}
+                  </pre>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-xs uppercase text-muted">Dependency impact</p>
+                  <pre className="whitespace-pre-wrap text-sm text-ink">
+                    {analysis.dependencyImpact
+                      ? JSON.stringify(analysis.dependencyImpact, null, 2)
+                      : 'No dependency impact'}
+                  </pre>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-xs uppercase text-muted">Risk classification</p>
+                  <pre className="whitespace-pre-wrap text-sm text-ink">
+                    {analysis.riskClassification
+                      ? JSON.stringify(analysis.riskClassification, null, 2)
+                      : 'No risk classification'}
                   </pre>
                 </div>
               </div>

@@ -3,6 +3,28 @@
 
 Write-Host "`n=== InfraMind System Startup ===" -ForegroundColor Cyan
 
+function Get-TestCredentials {
+    param([string]$envPath)
+    $result = @{}
+    if (!(Test-Path $envPath)) {
+        return $result
+    }
+    Get-Content $envPath | ForEach-Object {
+        if ($_ -match '^\s*#') { return }
+        if ($_ -match '^\s*([^=]+)\s*=\s*(.*)\s*$') {
+            $key = $matches[1].Trim()
+            $value = $matches[2]
+            if ($value.StartsWith('"') -and $value.EndsWith('"')) {
+                $value = $value.Trim('"')
+            }
+            if ($key -like 'TEST_*') {
+                $result[$key] = $value
+            }
+        }
+    }
+    return $result
+}
+
 # Check if servers are already running
 Write-Host "`n1. Checking for existing servers..." -ForegroundColor Yellow
 $php = Get-Process | Where-Object {$_.ProcessName -eq 'php'} | Select-Object -First 1
@@ -140,9 +162,16 @@ try {
 }
 
 Write-Host "`nTest Credentials:" -ForegroundColor Cyan
-Write-Host "  Employee: employee1@example.com / Employee123!@#" -ForegroundColor White
-Write-Host "  Manager:  manager@example.com / Manager123!@#" -ForegroundColor White
-Write-Host "  Owner:    owner@example.com / Owner123!@#" -ForegroundColor White
+$testEnvPath = "$PSScriptRoot\backend\.env"
+$testCreds = Get-TestCredentials $testEnvPath
+if ($testCreds.Count -gt 0) {
+    if ($testCreds['TEST_EMPLOYEE_EMAIL']) { Write-Host "  Employee: $($testCreds['TEST_EMPLOYEE_EMAIL'])" -ForegroundColor White }
+    if ($testCreds['TEST_MANAGER_EMAIL']) { Write-Host "  Manager:  $($testCreds['TEST_MANAGER_EMAIL'])" -ForegroundColor White }
+    if ($testCreds['TEST_OWNER_EMAIL']) { Write-Host "  Owner:    $($testCreds['TEST_OWNER_EMAIL'])" -ForegroundColor White }
+    Write-Host "  Passwords are stored in backend/.env (not shown)." -ForegroundColor Gray
+} else {
+    Write-Host "  Configured in backend/.env (TEST_* variables)." -ForegroundColor White
+}
 
 Write-Host "`nServers:" -ForegroundColor Cyan
 Write-Host "  Backend Job ID: $($backendJob.Id)" -ForegroundColor Gray

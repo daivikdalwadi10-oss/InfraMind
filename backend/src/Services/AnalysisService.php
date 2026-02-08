@@ -7,9 +7,12 @@ namespace InfraMind\Services;
 use InfraMind\Repositories\AnalysisRepository;
 use InfraMind\Repositories\AuditLogRepository;
 use InfraMind\Repositories\TaskRepository;
+use InfraMind\Repositories\TeamRepository;
 use InfraMind\Models\Analysis;
 use InfraMind\Models\AnalysisStatus;
 use InfraMind\Models\AnalysisType;
+use InfraMind\Models\Task;
+use InfraMind\Models\TaskStatus;
 use InfraMind\Utils\Utils;
 use InfraMind\Exceptions\NotFoundException;
 use InfraMind\Exceptions\AuthorizationException;
@@ -24,6 +27,7 @@ class AnalysisService
 {
     private AnalysisRepository $analysisRepository;
     private TaskRepository $taskRepository;
+    private TeamRepository $teamRepository;
     private AuditLogRepository $auditRepository;
     private Logger $logger;
     private Database $db;
@@ -35,6 +39,7 @@ class AnalysisService
     {
         $this->analysisRepository = new AnalysisRepository();
         $this->taskRepository = new TaskRepository();
+        $this->teamRepository = new TeamRepository();
         $this->auditRepository = new AuditLogRepository();
         $this->logger = Logger::getInstance();
         $this->db = Database::getInstance();
@@ -70,6 +75,8 @@ class AnalysisService
         $analysis = new Analysis(
             $analysisId,
             $taskId,
+            $task->title,
+            $employeeId,
             $employeeId,
             AnalysisStatus::DRAFT,
             AnalysisType::from($analysisType),
@@ -78,6 +85,8 @@ class AnalysisService
         );
 
         $analysis = $this->analysisRepository->create($analysis);
+
+        $this->analysisRepository->upsertInputs($analysisId, [], [], [], []);
 
         $this->recordStatusChange(
             $analysisId,
@@ -88,10 +97,99 @@ class AnalysisService
 
         $this->auditRepository->log('Analysis', $analysisId, 'CREATED', $employeeId, [
             'taskId' => $taskId,
+            'title' => $task->title,
             'type' => $analysisType,
         ]);
 
         $this->logger->info("Analysis created: $analysisId for task: $taskId by: $employeeId");
+
+        return $analysis;
+    }
+
+    /**
+     * Create analysis (manager) and assign to employee/team.
+     */
+    public function createAssignedAnalysis(
+        string $managerId,
+        string $title,
+        string $analysisType,
+        string $employeeId,
+        ?string $teamId = null,
+        ?string $taskDescription = null,
+    ): Analysis {
+        if ($teamId) {
+            $team = $this->teamRepository->findById($teamId);
+            if (!$team) {
+                throw new NotFoundException('Team not found');
+            }
+            if (!$this->teamRepository->isMember($teamId, $employeeId)) {
+                throw new AuthorizationException('Employee must be a member of the assigned team');
+            }
+        }
+
+        if (!$this->teamRepository->isManagerOfEmployee($managerId, $employeeId)) {
+            throw new AuthorizationException('You can only assign analyses to employees you manage');
+        }
+
+        $analysisId = $this->generateUuid();
+        $taskId = $this->generateUuid();
+        $now = Utils::now();
+
+        $task = new Task(
+            $taskId,
+            $title,
+            $taskDescription ?? '',
+            $managerId,
+            TaskStatus::IN_PROGRESS,
+            $now,
+            $now,
+            $employeeId,
+        );
+
+        $analysis = new Analysis(
+            $analysisId,
+            $taskId,
+            $title,
+            $employeeId,
+            $managerId,
+            AnalysisStatus::DRAFT,
+            AnalysisType::from($analysisType),
+            $now,
+            $now,
+            $teamId,
+        );
+
+        $this->db->beginTransaction();
+        try {
+            $this->taskRepository->create($task);
+            $this->analysisRepository->create($analysis);
+            $this->analysisRepository->upsertInputs($analysisId, [], [], [], []);
+
+            $this->recordStatusChange(
+                $analysisId,
+                AnalysisStatus::DRAFT,
+                $managerId,
+                'CREATED_BY_MANAGER',
+            );
+
+            $this->auditRepository->log('Analysis', $analysisId, 'CREATED', $managerId, [
+                'title' => $title,
+                'teamId' => $teamId,
+                'assignedTo' => $employeeId,
+            ]);
+
+            $this->auditRepository->log('Task', $taskId, 'CREATED', $managerId, [
+                'title' => $title,
+                'assignedTo' => $employeeId,
+            ]);
+
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            $this->db->rollback();
+            throw $e;
+        }
+
+        $this->logger->info("Analysis created by manager: $analysisId assigned to: $employeeId");
 
         return $analysis;
     }
@@ -118,6 +216,10 @@ class AnalysisService
         array $symptoms,
         array $signals,
         array $hypotheses,
+        array $environmentContext,
+        array $timelineEvents,
+        array $dependencyImpact,
+        array $riskClassification,
         int $readinessScore,
     ): Analysis {
         $analysis = $this->getAnalysis($analysisId);
@@ -139,6 +241,10 @@ class AnalysisService
             'symptoms' => $analysis->symptoms,
             'signals' => $analysis->signals,
             'hypotheses' => $analysis->hypotheses,
+            'environmentContext' => $analysis->environmentContext,
+            'timelineEvents' => $analysis->timelineEvents,
+            'dependencyImpact' => $analysis->dependencyImpact,
+            'riskClassification' => $analysis->riskClassification,
             'readinessScore' => $analysis->readinessScore,
         ];
 
@@ -146,6 +252,10 @@ class AnalysisService
         $analysis->symptoms = array_filter($symptoms);
         $analysis->signals = array_filter($signals);
         $analysis->hypotheses = $hypotheses; // Keep as-is for complex structures
+        $analysis->environmentContext = $environmentContext;
+        $analysis->timelineEvents = $timelineEvents;
+        $analysis->dependencyImpact = $dependencyImpact;
+        $analysis->riskClassification = $riskClassification;
         $analysis->readinessScore = $readinessScore;
         $analysis->revisionCount++;
 
@@ -154,6 +264,14 @@ class AnalysisService
             $analysis->symptoms,
             $analysis->signals,
             $analysis->hypotheses,
+        );
+
+        $this->analysisRepository->upsertInputs(
+            $analysisId,
+            $analysis->environmentContext,
+            $analysis->timelineEvents,
+            $analysis->dependencyImpact,
+            $analysis->riskClassification,
         );
 
         // Update in main table
@@ -176,6 +294,10 @@ class AnalysisService
                 'symptoms' => $analysis->symptoms,
                 'signals' => $analysis->signals,
                 'hypotheses' => count($analysis->hypotheses),
+                'environmentContext' => array_keys($analysis->environmentContext),
+                'timelineEvents' => array_keys($analysis->timelineEvents),
+                'dependencyImpact' => array_keys($analysis->dependencyImpact),
+                'riskClassification' => array_keys($analysis->riskClassification),
                 'readinessScore' => $readinessScore,
             ],
         ]);
@@ -245,6 +367,10 @@ class AnalysisService
     ): Analysis {
         $analysis = $this->getAnalysis($analysisId);
 
+        if (!$this->teamRepository->isManagerOfEmployee($managerId, $analysis->employeeId)) {
+            throw new AuthorizationException('You can only review analyses for your teams');
+        }
+
         // Only manager can review submitted analyses
         if ($analysis->status->value !== AnalysisStatus::SUBMITTED->value) {
             throw new InvalidStateException('Can only review SUBMITTED analyses');
@@ -292,9 +418,9 @@ class AnalysisService
     /**
      * Get analyses for manager to review.
      */
-    public function getAnalysesForReview(int $limit = 50, int $offset = 0): array
+    public function getAnalysesForReview(string $managerId, int $limit = 50, int $offset = 0): array
     {
-        return $this->analysisRepository->listForReview($limit, $offset);
+        return $this->analysisRepository->listForReview($managerId, $limit, $offset);
     }
 
     /**
@@ -306,10 +432,10 @@ class AnalysisService
         string $userId,
         string $action,
     ): void {
-        $stmt = $this->db->execute(
-            'INSERT INTO analysis_status_history (analysis_id, status, changed_by, details, changed_at)
-             VALUES (?, ?, ?, ?, ?)',
-            [$analysisId, $status->value, $userId, $action, Utils::now()]
+        $this->db->execute(
+            'INSERT INTO analysis_status_history (id, analysis_id, status, changed_by, details, changed_at)
+             VALUES (?, ?, ?, ?, ?, ?)',
+            [Utils::generateUuid(), $analysisId, $status->value, $userId, $action, Utils::now()]
         );
     }
 

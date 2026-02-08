@@ -7,6 +7,7 @@ namespace InfraMind\Controllers;
 use InfraMind\Core\Request;
 use InfraMind\Core\Response;
 use InfraMind\Services\AuthService;
+use InfraMind\Repositories\UserRepository;
 use InfraMind\Validators\SignupValidator;
 use InfraMind\Validators\LoginValidator;
 use InfraMind\Exceptions\ValidationException;
@@ -103,15 +104,19 @@ class AuthController
     public function getCurrentUser(Request $request): Response
     {
         try {
-            $user = $request->getUser();
-            if (!$user) {
+            $tokenUser = $request->getUser();
+            if (!$tokenUser) {
                 return (new Response(401))->error('Not authenticated');
             }
 
+            $userRepository = new UserRepository();
+            $user = $userRepository->findById($tokenUser->sub);
+            if (!$user) {
+                return (new Response(401))->error('User not found');
+            }
+
             return (new Response(200))->success([
-                'id' => $user->sub,
-                'email' => $user->email,
-                'role' => $user->role,
+                'user' => $user->toArray(),
             ]);
         } catch (\Exception $e) {
             return (new Response(401))->error('Authentication failed');

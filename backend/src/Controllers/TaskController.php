@@ -61,7 +61,23 @@ class TaskController
     public function get(Request $request, string $id): Response
     {
         try {
+            $user = $request->getUser();
+            if (!$user) {
+                return (new Response(401))->error('Not authenticated');
+            }
+
+            if ($user->role === 'OWNER') {
+                return (new Response(403))->error('Owners cannot view tasks');
+            }
+
             $task = $this->taskService->getTask($id);
+            if ($user->role === 'EMPLOYEE' && $task->assignedTo !== $user->sub) {
+                return (new Response(403))->error('You can only view assigned tasks');
+            }
+
+            if ($user->role === 'MANAGER' && $task->createdBy !== $user->sub) {
+                return (new Response(403))->error('You can only view tasks you created');
+            }
             return (new Response(200))->success($task->toArray());
         } catch (\Exception $e) {
             return (new Response(404))->error($e->getMessage());

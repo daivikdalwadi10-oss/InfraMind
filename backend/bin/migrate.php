@@ -28,7 +28,7 @@ try {
 
     $pattern = match ($driver) {
         'sqlite' => '*_initial_schema.sql',
-        'mysql' => '*_mysql_schema.sql',
+        'mysql' => '*_mysql_schema.mysql.sql',
         'sqlsrv' => '*_sqlserver_schema.sql',
         default => '*.sql',
     };

@@ -12,6 +12,7 @@ use InfraMind\Core\Config;
 use InfraMind\Core\Database;
 use InfraMind\Core\Logger;
 use InfraMind\Core\PasswordManager;
+use InfraMind\Utils\Utils;
 
 // Load environment
 Config::load(__DIR__ . '/../.env');
@@ -19,7 +20,7 @@ Config::load(__DIR__ . '/../.env');
 $logger = Logger::getInstance();
 
 function generateId(): string {
-    return bin2hex(random_bytes(18));
+    return Utils::generateUuid();
 }
 
 try {
@@ -46,6 +47,7 @@ try {
 
     $ownerId = generateId();
     $managerId = generateId();
+    $developerId = generateId();
     $employee1Id = generateId();
     $employee2Id = generateId();
 
@@ -53,33 +55,57 @@ try {
     
     $ownerHash = $passwordManager->hash('Owner123!@#');
     $managerHash = $passwordManager->hash('Manager123!@#');
+    $developerHash = $passwordManager->hash('Developer123!@#');
     $employee1Hash = $passwordManager->hash('Employee123!@#');
     $employee2Hash = $passwordManager->hash('Employee123!@#');
 
     // Insert users
     $db->execute(
-        'INSERT INTO users (id, email, password_hash, role, display_name, created_at, updated_at, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [$ownerId, 'owner@example.com', $ownerHash, 'OWNER', 'Alice Owner', $now, $now, 1]
+        'INSERT INTO users (id, email, password_hash, role, display_name, position, created_at, updated_at, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [$ownerId, 'owner@example.com', $ownerHash, 'OWNER', 'Alice Owner', 'Program Owner', $now, $now, 1]
     );
     echo "✓ Owner: owner@example.com\n";
 
     $db->execute(
-        'INSERT INTO users (id, email, password_hash, role, display_name, created_at, updated_at, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [$managerId, 'manager@example.com', $managerHash, 'MANAGER', 'Bob Manager', $now, $now, 1]
+        'INSERT INTO users (id, email, password_hash, role, display_name, position, created_at, updated_at, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [$managerId, 'manager@example.com', $managerHash, 'MANAGER', 'Bob Manager', 'Engineering Manager', $now, $now, 1]
     );
     echo "✓ Manager: manager@example.com\n";
 
     $db->execute(
-        'INSERT INTO users (id, email, password_hash, role, display_name, created_at, updated_at, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [$employee1Id, 'employee1@example.com', $employee1Hash, 'EMPLOYEE', 'Charlie Employee', $now, $now, 1]
+        'INSERT INTO users (id, email, password_hash, role, display_name, position, created_at, updated_at, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [$developerId, 'developer@example.com', $developerHash, 'SYSTEM_ADMIN', 'Dev Admin', 'Platform Engineering', $now, $now, 1]
+    );
+    echo "✓ Developer: developer@example.com\n";
+
+    $db->execute(
+        'INSERT INTO users (id, email, password_hash, role, display_name, position, created_at, updated_at, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [$employee1Id, 'employee1@example.com', $employee1Hash, 'EMPLOYEE', 'Charlie Employee', 'Site Reliability Engineer', $now, $now, 1]
     );
     echo "✓ Employee 1: employee1@example.com\n";
 
     $db->execute(
-        'INSERT INTO users (id, email, password_hash, role, display_name, created_at, updated_at, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [$employee2Id, 'employee2@example.com', $employee2Hash, 'EMPLOYEE', 'Diana Employee', $now, $now, 1]
+        'INSERT INTO users (id, email, password_hash, role, display_name, position, created_at, updated_at, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [$employee2Id, 'employee2@example.com', $employee2Hash, 'EMPLOYEE', 'Diana Employee', 'Security Engineer', $now, $now, 1]
     );
     echo "✓ Employee 2: employee2@example.com\n";
+
+    // Create teams and membership
+    echo "\nCreating team...\n";
+    $teamId = generateId();
+    $db->execute(
+        'INSERT INTO teams (id, name, description, manager_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+        [$teamId, 'Core Platform', 'Primary systems engineering team', $managerId, $now, $now]
+    );
+    $db->execute(
+        'INSERT INTO team_members (id, team_id, user_id, created_at) VALUES (?, ?, ?, ?)',
+        [generateId(), $teamId, $employee1Id, $now]
+    );
+    $db->execute(
+        'INSERT INTO team_members (id, team_id, user_id, created_at) VALUES (?, ?, ?, ?)',
+        [generateId(), $teamId, $employee2Id, $now]
+    );
+    echo "✓ Team Core Platform created and members assigned\n";
 
     // Create tasks
     echo "\nCreating test tasks...\n";
@@ -142,11 +168,14 @@ try {
     ]);
 
     $db->execute(
-        'INSERT INTO analyses (id, task_id, employee_id, status, analysis_type, symptoms, signals, hypotheses, readiness_score, revision_count, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO analyses (id, task_id, title, employee_id, created_by, team_id, status, analysis_type, symptoms, signals, hypotheses, readiness_score, revision_count, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
             $analysis1Id,
             $task1Id,
+            'Investigate API Latency',
             $employee1Id,
+            $managerId,
+            $teamId,
             'SUBMITTED',
             'LATENCY',
             $symptoms,
@@ -159,6 +188,33 @@ try {
         ]
     );
     echo "✓ Analysis 1 created (LATENCY, readiness: 82%)\n";
+
+    $inputs1 = json_encode([
+        'cloudProvider' => 'AWS',
+        'region' => 'us-east-1',
+        'serviceType' => 'API Gateway',
+        'deploymentVersion' => 'v2.4.1'
+    ]);
+    $timeline1 = json_encode([
+        'deployments' => ['v2.4.1 rolled out'],
+        'configChanges' => ['Connection pool size increased'],
+        'trafficSpikes' => ['Peak traffic at 09:00 UTC'],
+        'alerts' => ['Latency SLA breach']
+    ]);
+    $dependency1 = json_encode([
+        'upstreamServices' => ['Auth service'],
+        'downstreamServices' => ['Billing API'],
+        'sharedInfrastructure' => ['Shared Redis cluster']
+    ]);
+    $risk1 = json_encode([
+        'customerImpact' => 'Checkout delays',
+        'slaImpact' => 'P95 latency breach',
+        'severityLevel' => 'HIGH'
+    ]);
+    $db->execute(
+        'INSERT INTO analysis_inputs (id, analysis_id, environment_context, timeline_events, dependency_impact, risk_classification, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [generateId(), $analysis1Id, $inputs1, $timeline1, $dependency1, $risk1, $now, $now]
+    );
 
     // Add status history for analysis 1
     $statusHistoryId = generateId();
@@ -186,11 +242,14 @@ try {
     ]);
 
     $db->execute(
-        'INSERT INTO analyses (id, task_id, employee_id, status, analysis_type, symptoms, signals, hypotheses, readiness_score, revision_count, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO analyses (id, task_id, title, employee_id, created_by, team_id, status, analysis_type, symptoms, signals, hypotheses, readiness_score, revision_count, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [
             $analysis2Id,
             $task2Id,
+            'Review Database Security',
             $employee2Id,
+            $managerId,
+            $teamId,
             'DRAFT',
             'SECURITY',
             $symptoms2,
@@ -203,6 +262,33 @@ try {
         ]
     );
     echo "✓ Analysis 2 created (SECURITY, readiness: 65%)\n";
+
+    $inputs2 = json_encode([
+        'cloudProvider' => 'Azure',
+        'region' => 'west-europe',
+        'serviceType' => 'Database',
+        'deploymentVersion' => 'v1.9.0'
+    ]);
+    $timeline2 = json_encode([
+        'deployments' => ['Patch window scheduled'],
+        'configChanges' => ['Password policy updated'],
+        'trafficSpikes' => ['Login attempts spike'],
+        'alerts' => ['Security policy drift']
+    ]);
+    $dependency2 = json_encode([
+        'upstreamServices' => ['Identity provider'],
+        'downstreamServices' => ['Reporting service'],
+        'sharedInfrastructure' => ['Shared secrets vault']
+    ]);
+    $risk2 = json_encode([
+        'customerImpact' => 'Potential data exposure',
+        'slaImpact' => 'Compliance warning',
+        'severityLevel' => 'CRITICAL'
+    ]);
+    $db->execute(
+        'INSERT INTO analysis_inputs (id, analysis_id, environment_context, timeline_events, dependency_impact, risk_classification, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [generateId(), $analysis2Id, $inputs2, $timeline2, $dependency2, $risk2, $now, $now]
+    );
 
     // Re-enable foreign keys for SQLite
     if ($driver === 'sqlite') {

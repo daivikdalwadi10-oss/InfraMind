@@ -39,11 +39,32 @@ class ReportController
             if (!isset($data['analysisId'])) {
                 return (new Response(400))->error('analysisId required');
             }
-            if (!isset($data['summary'])) {
-                return (new Response(400))->error('summary required');
+            if (!isset($data['executiveSummary'])) {
+                return (new Response(400))->error('executiveSummary required');
+            }
+            if (!isset($data['rootCause'])) {
+                return (new Response(400))->error('rootCause required');
+            }
+            if (!isset($data['impact'])) {
+                return (new Response(400))->error('impact required');
+            }
+            if (!isset($data['resolution'])) {
+                return (new Response(400))->error('resolution required');
+            }
+            if (!isset($data['preventionSteps'])) {
+                return (new Response(400))->error('preventionSteps required');
             }
 
-            $report = $this->reportService->createReport($data['analysisId'], $data['summary'], $user->sub);
+            $report = $this->reportService->createReport(
+                $data['analysisId'],
+                $data['executiveSummary'],
+                $data['rootCause'],
+                $data['impact'],
+                $data['resolution'],
+                $data['preventionSteps'],
+                (bool) ($data['aiAssisted'] ?? false),
+                $user->sub,
+            );
             return (new Response(201))->success($report, 'Report created');
         } catch (\Exception $e) {
             $this->logger->error('Report creation error: ' . $e->getMessage());

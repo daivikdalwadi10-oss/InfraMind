@@ -86,7 +86,7 @@ BEGIN
         CONSTRAINT UQ_analyses_task_id UNIQUE (task_id),
         CONSTRAINT FK_analyses_task_id FOREIGN KEY (task_id) REFERENCES dbo.tasks(id) ON DELETE CASCADE,
         CONSTRAINT FK_analyses_employee_id FOREIGN KEY (employee_id) REFERENCES dbo.users(id) ON DELETE NO ACTION,
-        CONSTRAINT CK_analyses_status CHECK (status IN ('DRAFT', 'SUBMITTED', 'NEEDS_CHANGES', 'APPROVED')),
+        CONSTRAINT CK_analyses_status CHECK (status IN ('DRAFT', 'SUBMITTED', 'NEEDS_CHANGES', 'APPROVED', 'REPORT_GENERATED')),
         CONSTRAINT CK_analyses_type CHECK (analysis_type IN ('LATENCY', 'SECURITY', 'OUTAGE', 'CAPACITY')),
         CONSTRAINT CK_analyses_readiness CHECK (readiness_score >= 0 AND readiness_score <= 100),
         CONSTRAINT CK_analyses_symptoms_json CHECK (symptoms IS NULL OR ISJSON(symptoms) = 1),
@@ -139,11 +139,14 @@ BEGIN
         id NVARCHAR(255) NOT NULL,
         analysis_id NVARCHAR(255) NOT NULL,
         summary NVARCHAR(MAX) NOT NULL,
+        status NVARCHAR(20) NOT NULL CONSTRAINT DF_reports_status DEFAULT ('FINALIZED'),
         created_by NVARCHAR(255) NOT NULL,
         created_at DATETIME2(3) NOT NULL CONSTRAINT DF_reports_created_at DEFAULT (SYSUTCDATETIME()),
+        updated_at DATETIME2(3) NOT NULL CONSTRAINT DF_reports_updated_at DEFAULT (SYSUTCDATETIME()),
         CONSTRAINT PK_reports PRIMARY KEY (id),
         CONSTRAINT FK_reports_analysis_id FOREIGN KEY (analysis_id) REFERENCES dbo.analyses(id) ON DELETE CASCADE,
-        CONSTRAINT FK_reports_created_by FOREIGN KEY (created_by) REFERENCES dbo.users(id) ON DELETE NO ACTION
+        CONSTRAINT FK_reports_created_by FOREIGN KEY (created_by) REFERENCES dbo.users(id) ON DELETE NO ACTION,
+        CONSTRAINT CK_reports_status CHECK (status IN ('DRAFT', 'FINALIZED'))
     );
 END;
 GO
@@ -153,6 +156,141 @@ IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_reports_analysis_id' 
 GO
 IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_reports_created_by' AND object_id = OBJECT_ID('dbo.reports'))
     CREATE INDEX idx_reports_created_by ON dbo.reports(created_by);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_reports_status' AND object_id = OBJECT_ID('dbo.reports'))
+    CREATE INDEX idx_reports_status ON dbo.reports(status);
+GO
+
+IF OBJECT_ID('dbo.incidents', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.incidents (
+        id NVARCHAR(255) NOT NULL,
+        title NVARCHAR(500) NOT NULL,
+        description NVARCHAR(MAX) NULL,
+        severity NVARCHAR(20) NOT NULL CONSTRAINT DF_incidents_severity DEFAULT ('MEDIUM'),
+        status NVARCHAR(20) NOT NULL CONSTRAINT DF_incidents_status DEFAULT ('OPEN'),
+        reported_by NVARCHAR(255) NOT NULL,
+        assigned_to NVARCHAR(255) NULL,
+        occurred_at DATETIME2(3) NULL,
+        created_at DATETIME2(3) NOT NULL CONSTRAINT DF_incidents_created_at DEFAULT (SYSUTCDATETIME()),
+        updated_at DATETIME2(3) NOT NULL CONSTRAINT DF_incidents_updated_at DEFAULT (SYSUTCDATETIME()),
+        resolved_at DATETIME2(3) NULL,
+        CONSTRAINT PK_incidents PRIMARY KEY (id),
+        CONSTRAINT CK_incidents_severity CHECK (severity IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),
+        CONSTRAINT CK_incidents_status CHECK (status IN ('OPEN', 'INVESTIGATING', 'RESOLVED')),
+        CONSTRAINT FK_incidents_reported_by FOREIGN KEY (reported_by) REFERENCES dbo.users(id) ON DELETE NO ACTION,
+        CONSTRAINT FK_incidents_assigned_to FOREIGN KEY (assigned_to) REFERENCES dbo.users(id) ON DELETE NO ACTION
+    );
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_incidents_reported_by' AND object_id = OBJECT_ID('dbo.incidents'))
+    CREATE INDEX idx_incidents_reported_by ON dbo.incidents(reported_by);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_incidents_assigned_to' AND object_id = OBJECT_ID('dbo.incidents'))
+    CREATE INDEX idx_incidents_assigned_to ON dbo.incidents(assigned_to);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_incidents_status' AND object_id = OBJECT_ID('dbo.incidents'))
+    CREATE INDEX idx_incidents_status ON dbo.incidents(status);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_incidents_severity' AND object_id = OBJECT_ID('dbo.incidents'))
+    CREATE INDEX idx_incidents_severity ON dbo.incidents(severity);
+GO
+
+IF OBJECT_ID('dbo.infrastructure_states', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.infrastructure_states (
+        id NVARCHAR(255) NOT NULL,
+        component NVARCHAR(255) NOT NULL,
+        status NVARCHAR(20) NOT NULL CONSTRAINT DF_infra_status DEFAULT ('HEALTHY'),
+        summary NVARCHAR(MAX) NULL,
+        observed_at DATETIME2(3) NOT NULL CONSTRAINT DF_infra_observed_at DEFAULT (SYSUTCDATETIME()),
+        reported_by NVARCHAR(255) NOT NULL,
+        created_at DATETIME2(3) NOT NULL CONSTRAINT DF_infra_created_at DEFAULT (SYSUTCDATETIME()),
+        updated_at DATETIME2(3) NOT NULL CONSTRAINT DF_infra_updated_at DEFAULT (SYSUTCDATETIME()),
+        CONSTRAINT PK_infrastructure_states PRIMARY KEY (id),
+        CONSTRAINT CK_infra_status CHECK (status IN ('HEALTHY', 'DEGRADED', 'OUTAGE', 'MAINTENANCE')),
+        CONSTRAINT FK_infra_reported_by FOREIGN KEY (reported_by) REFERENCES dbo.users(id) ON DELETE NO ACTION
+    );
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_infra_component' AND object_id = OBJECT_ID('dbo.infrastructure_states'))
+    CREATE INDEX idx_infra_component ON dbo.infrastructure_states(component);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_infra_status' AND object_id = OBJECT_ID('dbo.infrastructure_states'))
+    CREATE INDEX idx_infra_status ON dbo.infrastructure_states(status);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_infra_reported_by' AND object_id = OBJECT_ID('dbo.infrastructure_states'))
+    CREATE INDEX idx_infra_reported_by ON dbo.infrastructure_states(reported_by);
+GO
+
+IF OBJECT_ID('dbo.architecture_risks', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.architecture_risks (
+        id NVARCHAR(255) NOT NULL,
+        title NVARCHAR(500) NOT NULL,
+        description NVARCHAR(MAX) NULL,
+        severity NVARCHAR(20) NOT NULL CONSTRAINT DF_risks_severity DEFAULT ('MEDIUM'),
+        status NVARCHAR(20) NOT NULL CONSTRAINT DF_risks_status DEFAULT ('OPEN'),
+        owner_id NVARCHAR(255) NOT NULL,
+        analysis_id NVARCHAR(255) NULL,
+        created_at DATETIME2(3) NOT NULL CONSTRAINT DF_risks_created_at DEFAULT (SYSUTCDATETIME()),
+        updated_at DATETIME2(3) NOT NULL CONSTRAINT DF_risks_updated_at DEFAULT (SYSUTCDATETIME()),
+        resolved_at DATETIME2(3) NULL,
+        CONSTRAINT PK_architecture_risks PRIMARY KEY (id),
+        CONSTRAINT CK_risks_severity CHECK (severity IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),
+        CONSTRAINT CK_risks_status CHECK (status IN ('OPEN', 'MITIGATING', 'RESOLVED')),
+        CONSTRAINT FK_risks_owner FOREIGN KEY (owner_id) REFERENCES dbo.users(id) ON DELETE NO ACTION,
+        CONSTRAINT FK_risks_analysis FOREIGN KEY (analysis_id) REFERENCES dbo.analyses(id) ON DELETE SET NULL
+    );
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_risks_owner' AND object_id = OBJECT_ID('dbo.architecture_risks'))
+    CREATE INDEX idx_risks_owner ON dbo.architecture_risks(owner_id);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_risks_analysis' AND object_id = OBJECT_ID('dbo.architecture_risks'))
+    CREATE INDEX idx_risks_analysis ON dbo.architecture_risks(analysis_id);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_risks_status' AND object_id = OBJECT_ID('dbo.architecture_risks'))
+    CREATE INDEX idx_risks_status ON dbo.architecture_risks(status);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_risks_severity' AND object_id = OBJECT_ID('dbo.architecture_risks'))
+    CREATE INDEX idx_risks_severity ON dbo.architecture_risks(severity);
+GO
+
+IF OBJECT_ID('dbo.meetings', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.meetings (
+        id NVARCHAR(255) NOT NULL,
+        title NVARCHAR(500) NOT NULL,
+        agenda NVARCHAR(MAX) NULL,
+        status NVARCHAR(20) NOT NULL CONSTRAINT DF_meetings_status DEFAULT ('SCHEDULED'),
+        scheduled_at DATETIME2(3) NOT NULL,
+        duration_minutes INT NOT NULL CONSTRAINT DF_meetings_duration DEFAULT (30),
+        organizer_id NVARCHAR(255) NOT NULL,
+        analysis_id NVARCHAR(255) NULL,
+        incident_id NVARCHAR(255) NULL,
+        created_at DATETIME2(3) NOT NULL CONSTRAINT DF_meetings_created_at DEFAULT (SYSUTCDATETIME()),
+        updated_at DATETIME2(3) NOT NULL CONSTRAINT DF_meetings_updated_at DEFAULT (SYSUTCDATETIME()),
+        CONSTRAINT PK_meetings PRIMARY KEY (id),
+        CONSTRAINT CK_meetings_status CHECK (status IN ('SCHEDULED', 'COMPLETED', 'CANCELLED')),
+        CONSTRAINT FK_meetings_organizer FOREIGN KEY (organizer_id) REFERENCES dbo.users(id) ON DELETE NO ACTION,
+        CONSTRAINT FK_meetings_analysis FOREIGN KEY (analysis_id) REFERENCES dbo.analyses(id) ON DELETE SET NULL,
+        CONSTRAINT FK_meetings_incident FOREIGN KEY (incident_id) REFERENCES dbo.incidents(id) ON DELETE SET NULL
+    );
+END;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_meetings_organizer' AND object_id = OBJECT_ID('dbo.meetings'))
+    CREATE INDEX idx_meetings_organizer ON dbo.meetings(organizer_id);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_meetings_status' AND object_id = OBJECT_ID('dbo.meetings'))
+    CREATE INDEX idx_meetings_status ON dbo.meetings(status);
+GO
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'idx_meetings_scheduled_at' AND object_id = OBJECT_ID('dbo.meetings'))
+    CREATE INDEX idx_meetings_scheduled_at ON dbo.meetings(scheduled_at);
 GO
 
 IF OBJECT_ID('dbo.audit_logs', 'U') IS NULL
@@ -196,7 +334,7 @@ BEGIN
         CONSTRAINT PK_analysis_status_history PRIMARY KEY (id),
         CONSTRAINT FK_status_history_analysis_id FOREIGN KEY (analysis_id) REFERENCES dbo.analyses(id) ON DELETE CASCADE,
         CONSTRAINT FK_status_history_changed_by FOREIGN KEY (changed_by) REFERENCES dbo.users(id) ON DELETE NO ACTION,
-        CONSTRAINT CK_status_history_status CHECK (status IN ('DRAFT', 'SUBMITTED', 'NEEDS_CHANGES', 'APPROVED'))
+        CONSTRAINT CK_status_history_status CHECK (status IN ('DRAFT', 'SUBMITTED', 'NEEDS_CHANGES', 'APPROVED', 'REPORT_GENERATED'))
     );
 END;
 GO

@@ -2,7 +2,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, ClipboardCheck, ListChecks, ShieldCheck, FileText, UserCircle } from 'lucide-react';
+import {
+  AlertTriangle,
+  Calendar,
+  ClipboardCheck,
+  FileText,
+  LayoutDashboard,
+  ListChecks,
+  Server,
+  Shield,
+  ShieldCheck,
+  UserCircle,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getRole } from '@/lib/auth';
 import { useSession } from '@/hooks/useSession';
@@ -12,8 +23,14 @@ const navItems = [
   { label: 'Tasks', href: '/tasks', icon: ClipboardCheck, roles: ['EMPLOYEE', 'MANAGER'] },
   { label: 'Analyses', href: '/analysis', icon: ListChecks, roles: ['EMPLOYEE', 'MANAGER'] },
   { label: 'Reviews', href: '/reviews', icon: ShieldCheck, roles: ['MANAGER'] },
+  { label: 'Incidents', href: '/incidents', icon: AlertTriangle, roles: ['EMPLOYEE', 'MANAGER', 'OWNER'] },
+  { label: 'Infrastructure', href: '/infrastructure', icon: Server, roles: ['MANAGER', 'OWNER'] },
+  { label: 'Risks', href: '/risks', icon: Shield, roles: ['MANAGER', 'OWNER'] },
+  { label: 'Meetings', href: '/meetings', icon: Calendar, roles: ['MANAGER', 'OWNER'] },
+  { label: 'Management', href: '/management', icon: ShieldCheck, roles: ['MANAGER', 'OWNER'] },
   { label: 'Reports', href: '/reports', icon: FileText, roles: ['MANAGER', 'OWNER'] },
   { label: 'Profile', href: '/profile', icon: UserCircle, roles: ['EMPLOYEE', 'MANAGER', 'OWNER'] },
+  { label: 'Developer', href: '/developer', icon: Shield, roles: ['DEVELOPER', 'SYSTEM_ADMIN'] },
 ];
 
 export function SidebarNav() {

@@ -1,4 +1,7 @@
 {
+  "files.associations": {
+    "*.mysql.sql": "mysql"
+  },
   "eslint.ignorePatterns": [
     ".next/**",
     "frontend/.next/**",

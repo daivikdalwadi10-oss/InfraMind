@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { apiRequest } from '@/lib/api';
 import { useSession } from '@/hooks/useSession';
-import type { Analysis, Task, UserProfile } from '@/lib/types';
+import type { Analysis, Task, Team, UserProfile } from '@/lib/types';
 
 export default function TasksPage() {
   const { user, accessToken, status } = useSession();
@@ -21,10 +21,16 @@ export default function TasksPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
+  const [analysisTitle, setAnalysisTitle] = useState('');
+  const [analysisType, setAnalysisType] = useState('LATENCY');
+  const [analysisAssignedTo, setAnalysisAssignedTo] = useState('');
+  const [analysisTeamId, setAnalysisTeamId] = useState('');
+  const [analysisDescription, setAnalysisDescription] = useState('');
+  const [teams, setTeams] = useState<Team[]>([]);
 
   const role = user?.role ?? null;
-  const isManager = role === 'MANAGER';
   const isEmployee = role === 'EMPLOYEE';
+  const canAssign = role === 'MANAGER' || role === 'OWNER';
 
   const loadTasks = async () => {
     if (status !== 'authenticated' || !accessToken) return;
@@ -52,7 +58,7 @@ export default function TasksPage() {
   };
 
   const loadUsers = async () => {
-    if (!isManager || status !== 'authenticated' || !accessToken) return;
+    if (!canAssign || status !== 'authenticated' || !accessToken) return;
     const response = await apiRequest<UserProfile[]>('GET', '/users', undefined, accessToken);
     if (!response.success || !response.data) {
       setFormError(response.error || 'Unable to load users.');
@@ -62,11 +68,22 @@ export default function TasksPage() {
     setUsers(response.data);
   };
 
+  const loadTeams = async () => {
+    if (!canAssign || status !== 'authenticated' || !accessToken) return;
+    const response = await apiRequest<Team[]>('GET', '/teams', undefined, accessToken);
+    if (!response.success || !response.data) {
+      setTeams([]);
+      return;
+    }
+    setTeams(response.data);
+  };
+
   useEffect(() => {
     void loadTasks();
     void loadUsers();
+    void loadTeams();
     void loadAnalyses();
-  }, [status, accessToken, isManager, isEmployee]);
+  }, [status, accessToken, canAssign, isEmployee]);
 
   const handleCreateTask = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -133,6 +150,40 @@ export default function TasksPage() {
     void loadAnalyses();
   };
 
+  const handleCreateAssignedAnalysis = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!accessToken) return;
+    setSaving(true);
+    setFormError(null);
+
+    const response = await apiRequest<Analysis>(
+      'POST',
+      '/analyses/manager',
+      {
+        title: analysisTitle,
+        analysisType,
+        assignedTo: analysisAssignedTo,
+        teamId: analysisTeamId || null,
+        taskDescription: analysisDescription || null,
+      },
+      accessToken,
+    );
+
+    setSaving(false);
+    if (!response.success || !response.data) {
+      setFormError(response.error || 'Failed to create assigned analysis.');
+      return;
+    }
+
+    setAnalysisTitle('');
+    setAnalysisType('LATENCY');
+    setAnalysisAssignedTo('');
+    setAnalysisTeamId('');
+    setAnalysisDescription('');
+    void loadTasks();
+    void loadAnalyses();
+  };
+
   return (
     <AppShell>
       <div className="space-y-6">
@@ -150,7 +201,7 @@ export default function TasksPage() {
           </Card>
         ) : null}
 
-        {isManager ? (
+        {canAssign ? (
           <Card>
             <CardHeader>
               <CardTitle>Create task</CardTitle>
@@ -183,7 +234,13 @@ export default function TasksPage() {
                     value={assignedTo}
                     onChange={(event) => setAssignedTo(event.target.value)}
                   >
-                    <option value="">Unassigned</option>
+                    {users.length === 0 ? (
+                      <option value="" disabled>
+                        No employees available
+                      </option>
+                    ) : (
+                      <option value="">Unassigned</option>
+                    )}
                     {users
                       .filter((item) => item.role === 'EMPLOYEE')
                       .map((employee) => (
@@ -196,6 +253,92 @@ export default function TasksPage() {
                 {formError ? <p className="text-sm text-rose-600">{formError}</p> : null}
                 <Button type="submit" disabled={saving}>
                   {saving ? 'Creating...' : 'Create task'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {canAssign ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Create assigned analysis</CardTitle>
+              <CardDescription>Start an analysis and assign ownership.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-3" onSubmit={handleCreateAssignedAnalysis}>
+                <div className="space-y-1">
+                  <label className="text-xs uppercase text-muted">Analysis title</label>
+                  <input
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    value={analysisTitle}
+                    onChange={(event) => setAnalysisTitle(event.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs uppercase text-muted">Analysis type</label>
+                  <select
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    value={analysisType}
+                    onChange={(event) => setAnalysisType(event.target.value)}
+                  >
+                    <option value="LATENCY">Latency</option>
+                    <option value="SECURITY">Security</option>
+                    <option value="OUTAGE">Outage</option>
+                    <option value="CAPACITY">Capacity</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs uppercase text-muted">Team</label>
+                  <select
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    value={analysisTeamId}
+                    onChange={(event) => setAnalysisTeamId(event.target.value)}
+                  >
+                    <option value="">Select team</option>
+                    {teams.map((team) => (
+                      <option key={team.id} value={team.id}>
+                        {team.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs uppercase text-muted">Assign to</label>
+                  <select
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    value={analysisAssignedTo}
+                    onChange={(event) => setAnalysisAssignedTo(event.target.value)}
+                    required
+                  >
+                    {users.length === 0 ? (
+                      <option value="" disabled>
+                        No employees available
+                      </option>
+                    ) : (
+                      <option value="">Select employee</option>
+                    )}
+                    {users
+                      .filter((item) => item.role === 'EMPLOYEE')
+                      .map((employee) => (
+                        <option key={employee.id} value={employee.id}>
+                          {employee.displayName} ({employee.email})
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs uppercase text-muted">Task description</label>
+                  <textarea
+                    className="min-h-[90px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    value={analysisDescription}
+                    onChange={(event) => setAnalysisDescription(event.target.value)}
+                  />
+                </div>
+                {formError ? <p className="text-sm text-rose-600">{formError}</p> : null}
+                <Button type="submit" disabled={saving}>
+                  {saving ? 'Creating...' : 'Create analysis'}
                 </Button>
               </form>
             </CardContent>

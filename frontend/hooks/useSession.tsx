@@ -11,7 +11,7 @@ interface SessionContextValue {
   status: 'loading' | 'authenticated' | 'unauthenticated' | 'error';
   error?: string;
   refresh: () => Promise<void>;
-  setToken: (token: string) => void;
+  setToken: (_token: string) => void;
   signOut: () => void;
 }
 

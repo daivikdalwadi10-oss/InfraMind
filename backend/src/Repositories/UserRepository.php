@@ -27,8 +27,8 @@ class UserRepository
      */
     public function create(User $user): User
     {
-        $sql = 'INSERT INTO users (id, email, password_hash, role, display_name, created_at, is_active)
-                VALUES (?, ?, ?, ?, ?, ?, ?)';
+        $sql = 'INSERT INTO users (id, email, password_hash, role, display_name, position, created_at, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
 
         $this->db->execute($sql, [
             $user->id,
@@ -36,6 +36,7 @@ class UserRepository
             $user->passwordHash,
             $user->role->value,
             $user->displayName,
+            $user->position,
             $user->createdAt,
             $user->isActive ? 1 : 0,
         ]);
@@ -70,12 +71,13 @@ class UserRepository
      */
     public function update(User $user): User
     {
-        $sql = 'UPDATE users SET display_name = ?, role = ?, is_active = ?
+        $sql = 'UPDATE users SET display_name = ?, role = ?, position = ?, is_active = ?
                 WHERE id = ? AND deleted_at IS NULL';
 
         $this->db->execute($sql, [
             $user->displayName,
             $user->role->value,
+            $user->position,
             $user->isActive ? 1 : 0,
             $user->id,
         ]);
@@ -114,6 +116,58 @@ class UserRepository
     }
 
     /**
+     * List employees managed by a manager with workload context.
+     */
+    public function listManagedEmployeesWithWorkload(string $managerId, int $limit = 50, int $offset = 0): array
+    {
+        $sql = "SELECT
+                    u.id,
+                    u.email,
+                    u.display_name,
+                    u.role,
+                    u.position,
+                    GROUP_CONCAT(DISTINCT t.name) AS teams,
+                    COUNT(DISTINCT a.id) AS active_analysis_count,
+                    GROUP_CONCAT(DISTINCT a.id) AS active_analysis_ids
+                FROM users u
+                JOIN team_members tm ON tm.user_id = u.id
+                JOIN teams t ON t.id = tm.team_id
+                LEFT JOIN analyses a ON a.employee_id = u.id AND a.status IN ('DRAFT','NEEDS_CHANGES','SUBMITTED')
+                WHERE t.manager_id = ? AND u.deleted_at IS NULL
+                GROUP BY u.id
+                ORDER BY u.created_at DESC
+                LIMIT ? OFFSET ?";
+
+        return $this->db->fetchAll($sql, [$managerId, $limit, $offset]);
+    }
+
+    /**
+     * List all employees with workload context (owner).
+     */
+    public function listAllEmployeesWithWorkload(int $limit = 50, int $offset = 0): array
+    {
+        $sql = "SELECT
+                    u.id,
+                    u.email,
+                    u.display_name,
+                    u.role,
+                    u.position,
+                    GROUP_CONCAT(DISTINCT t.name) AS teams,
+                    COUNT(DISTINCT a.id) AS active_analysis_count,
+                    GROUP_CONCAT(DISTINCT a.id) AS active_analysis_ids
+                FROM users u
+                LEFT JOIN team_members tm ON tm.user_id = u.id
+                LEFT JOIN teams t ON t.id = tm.team_id
+                LEFT JOIN analyses a ON a.employee_id = u.id AND a.status IN ('DRAFT','NEEDS_CHANGES','SUBMITTED')
+                WHERE u.deleted_at IS NULL
+                GROUP BY u.id
+                ORDER BY u.created_at DESC
+                LIMIT ? OFFSET ?";
+
+        return $this->db->fetchAll($sql, [$limit, $offset]);
+    }
+
+    /**
      * Count active users.
      */
     public function countActive(): int
@@ -135,6 +189,7 @@ class UserRepository
             UserRole::from($row['role']),
             $row['display_name'],
             is_int($row['created_at']) ? date('Y-m-d H:i:s', $row['created_at']) : $row['created_at'],
+            $row['position'] ?? null,
         );
 
         $user->lastLoginAt = $row['last_login_at'] ? (is_int($row['last_login_at']) ? date('Y-m-d H:i:s', $row['last_login_at']) : $row['last_login_at']) : null;

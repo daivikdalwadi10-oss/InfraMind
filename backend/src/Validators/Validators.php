@@ -130,6 +130,14 @@ class Validator
     }
 
     /**
+     * Add a custom validation error.
+     */
+    public function addError(string $field, string $message): void
+    {
+        $this->errors[$field] = $message;
+    }
+
+    /**
      * Check if there are any errors.
      */
     public function hasErrors(): bool
@@ -215,9 +223,8 @@ class TaskValidator
             $validator->length('title', $data['title'], 1, 255);
         }
 
-        $validator->required('description', $data['description'] ?? null);
-        if (isset($data['description'])) {
-            $validator->length('description', $data['description'], 1, 2000);
+        if (isset($data['description']) && $data['description'] !== '') {
+            $validator->length('description', $data['description'], 0, 2000);
         }
 
         if (isset($data['assignedTo'])) {
@@ -250,26 +257,72 @@ class AnalysisValidator
         $validator->throwIfErrors();
     }
 
+    public static function validateManagerCreate(array $data): void
+    {
+        $validator = new Validator();
+
+        $validator->required('title', $data['title'] ?? null);
+        if (isset($data['title'])) {
+            $validator->length('title', $data['title'], 1, 500);
+        }
+
+        $validator->required('analysisType', $data['analysisType'] ?? null);
+        if (isset($data['analysisType'])) {
+            $validator->enum('analysisType', $data['analysisType'], ['LATENCY', 'SECURITY', 'OUTAGE', 'CAPACITY']);
+        }
+
+        $validator->required('assignedTo', $data['assignedTo'] ?? null);
+        if (isset($data['assignedTo'])) {
+            $validator->uuid('assignedTo', $data['assignedTo']);
+        }
+
+        if (isset($data['teamId'])) {
+            $validator->uuid('teamId', $data['teamId']);
+        }
+
+        if (isset($data['taskDescription'])) {
+            $validator->length('taskDescription', $data['taskDescription'], 0, 2000);
+        }
+
+        $validator->throwIfErrors();
+    }
+
     public static function validateUpdate(array $data): void
     {
         $validator = new Validator();
 
         if (isset($data['symptoms'])) {
             if (!is_array($data['symptoms'])) {
-                $validator->errors['symptoms'] = 'Symptoms must be an array';
+                $validator->addError('symptoms', 'Symptoms must be an array');
             }
         }
 
         if (isset($data['signals'])) {
             if (!is_array($data['signals'])) {
-                $validator->errors['signals'] = 'Signals must be an array';
+                $validator->addError('signals', 'Signals must be an array');
             }
         }
 
         if (isset($data['hypotheses'])) {
             if (!is_array($data['hypotheses'])) {
-                $validator->errors['hypotheses'] = 'Hypotheses must be an array';
+                $validator->addError('hypotheses', 'Hypotheses must be an array');
             }
+        }
+
+        if (isset($data['environmentContext']) && !is_array($data['environmentContext'])) {
+            $validator->addError('environmentContext', 'Environment context must be an object');
+        }
+
+        if (isset($data['timelineEvents']) && !is_array($data['timelineEvents'])) {
+            $validator->addError('timelineEvents', 'Timeline events must be an object');
+        }
+
+        if (isset($data['dependencyImpact']) && !is_array($data['dependencyImpact'])) {
+            $validator->addError('dependencyImpact', 'Dependency impact must be an object');
+        }
+
+        if (isset($data['riskClassification']) && !is_array($data['riskClassification'])) {
+            $validator->addError('riskClassification', 'Risk classification must be an object');
         }
 
         if (isset($data['readinessScore'])) {
@@ -296,6 +349,293 @@ class AnalysisValidator
 
         if (isset($data['feedback'])) {
             $validator->length('feedback', $data['feedback'], 0, 2000);
+        }
+
+        $validator->throwIfErrors();
+    }
+}
+
+/**
+ * Incident validation.
+ */
+class IncidentValidator
+{
+    public static function validateCreate(array $data): void
+    {
+        $validator = new Validator();
+
+        $validator->required('title', $data['title'] ?? null);
+        if (isset($data['title'])) {
+            $validator->length('title', $data['title'], 1, 500);
+        }
+
+        if (isset($data['description']) && $data['description'] !== '') {
+            $validator->length('description', $data['description'], 0, 2000);
+        }
+
+        if (isset($data['severity'])) {
+            $validator->enum('severity', $data['severity'], ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
+        }
+
+        if (isset($data['assignedTo'])) {
+            $validator->uuid('assignedTo', $data['assignedTo']);
+        }
+
+        $validator->throwIfErrors();
+    }
+
+    public static function validateUpdate(array $data): void
+    {
+        $validator = new Validator();
+
+        if (isset($data['title'])) {
+            $validator->length('title', $data['title'], 1, 500);
+        }
+
+        if (isset($data['description']) && $data['description'] !== '') {
+            $validator->length('description', $data['description'], 0, 2000);
+        }
+
+        if (isset($data['severity'])) {
+            $validator->enum('severity', $data['severity'], ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
+        }
+
+        if (isset($data['status'])) {
+            $validator->enum('status', $data['status'], ['OPEN', 'INVESTIGATING', 'RESOLVED']);
+        }
+
+        if (isset($data['assignedTo'])) {
+            $validator->uuid('assignedTo', $data['assignedTo']);
+        }
+
+        $validator->throwIfErrors();
+    }
+}
+
+/**
+ * Team validation.
+ */
+class TeamValidator
+{
+    public static function validateCreate(array $data): void
+    {
+        $validator = new Validator();
+
+        $validator->required('name', $data['name'] ?? null);
+        if (isset($data['name'])) {
+            $validator->length('name', $data['name'], 2, 100);
+        }
+
+        if (isset($data['description'])) {
+            $validator->length('description', $data['description'], 0, 1000);
+        }
+
+        $validator->throwIfErrors();
+    }
+
+    public static function validateMember(array $data): void
+    {
+        $validator = new Validator();
+        $validator->required('userId', $data['userId'] ?? null);
+        if (isset($data['userId'])) {
+            $validator->uuid('userId', $data['userId']);
+        }
+        $validator->throwIfErrors();
+    }
+}
+
+/**
+ * AI output validation.
+ */
+class AiOutputValidator
+{
+    public static function validateUpdate(array $data): void
+    {
+        $validator = new Validator();
+        $validator->required('status', $data['status'] ?? null);
+        if (isset($data['status'])) {
+            $validator->enum('status', $data['status'], ['GENERATED', 'ACCEPTED', 'REJECTED', 'EDITED']);
+        }
+
+        if (isset($data['payload']) && !is_array($data['payload'])) {
+            $validator->addError('payload', 'Payload must be an object');
+        }
+
+        $validator->throwIfErrors();
+    }
+}
+
+/**
+ * Infrastructure state validation.
+ */
+class InfrastructureStateValidator
+{
+    public static function validateCreate(array $data): void
+    {
+        $validator = new Validator();
+
+        $validator->required('component', $data['component'] ?? null);
+        if (isset($data['component'])) {
+            $validator->length('component', $data['component'], 1, 255);
+        }
+
+        if (isset($data['status'])) {
+            $validator->enum('status', $data['status'], ['HEALTHY', 'DEGRADED', 'OUTAGE', 'MAINTENANCE']);
+        }
+
+        if (isset($data['summary']) && $data['summary'] !== '') {
+            $validator->length('summary', $data['summary'], 0, 2000);
+        }
+
+        $validator->throwIfErrors();
+    }
+
+    public static function validateUpdate(array $data): void
+    {
+        $validator = new Validator();
+
+        if (isset($data['component'])) {
+            $validator->length('component', $data['component'], 1, 255);
+        }
+
+        if (isset($data['status'])) {
+            $validator->enum('status', $data['status'], ['HEALTHY', 'DEGRADED', 'OUTAGE', 'MAINTENANCE']);
+        }
+
+        if (isset($data['summary']) && $data['summary'] !== '') {
+            $validator->length('summary', $data['summary'], 0, 2000);
+        }
+
+        $validator->throwIfErrors();
+    }
+}
+
+/**
+ * Architecture risk validation.
+ */
+class ArchitectureRiskValidator
+{
+    public static function validateCreate(array $data): void
+    {
+        $validator = new Validator();
+
+        $validator->required('title', $data['title'] ?? null);
+        if (isset($data['title'])) {
+            $validator->length('title', $data['title'], 1, 500);
+        }
+
+        if (isset($data['description']) && $data['description'] !== '') {
+            $validator->length('description', $data['description'], 0, 2000);
+        }
+
+        if (isset($data['severity'])) {
+            $validator->enum('severity', $data['severity'], ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
+        }
+
+        if (isset($data['status'])) {
+            $validator->enum('status', $data['status'], ['OPEN', 'MITIGATING', 'RESOLVED']);
+        }
+
+        if (isset($data['analysisId'])) {
+            $validator->uuid('analysisId', $data['analysisId']);
+        }
+
+        $validator->throwIfErrors();
+    }
+
+    public static function validateUpdate(array $data): void
+    {
+        $validator = new Validator();
+
+        if (isset($data['title'])) {
+            $validator->length('title', $data['title'], 1, 500);
+        }
+
+        if (isset($data['description']) && $data['description'] !== '') {
+            $validator->length('description', $data['description'], 0, 2000);
+        }
+
+        if (isset($data['severity'])) {
+            $validator->enum('severity', $data['severity'], ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']);
+        }
+
+        if (isset($data['status'])) {
+            $validator->enum('status', $data['status'], ['OPEN', 'MITIGATING', 'RESOLVED']);
+        }
+
+        if (isset($data['analysisId'])) {
+            $validator->uuid('analysisId', $data['analysisId']);
+        }
+
+        $validator->throwIfErrors();
+    }
+}
+
+/**
+ * Meeting validation.
+ */
+class MeetingValidator
+{
+    public static function validateCreate(array $data): void
+    {
+        $validator = new Validator();
+
+        $validator->required('title', $data['title'] ?? null);
+        if (isset($data['title'])) {
+            $validator->length('title', $data['title'], 1, 500);
+        }
+
+        $validator->required('scheduledAt', $data['scheduledAt'] ?? null);
+
+        if (isset($data['agenda']) && $data['agenda'] !== '') {
+            $validator->length('agenda', $data['agenda'], 0, 2000);
+        }
+
+        if (isset($data['status'])) {
+            $validator->enum('status', $data['status'], ['SCHEDULED', 'COMPLETED', 'CANCELLED']);
+        }
+
+        if (isset($data['durationMinutes'])) {
+            $validator->intRange('durationMinutes', (int) $data['durationMinutes'], 15, 480);
+        }
+
+        if (isset($data['analysisId'])) {
+            $validator->uuid('analysisId', $data['analysisId']);
+        }
+
+        if (isset($data['incidentId'])) {
+            $validator->uuid('incidentId', $data['incidentId']);
+        }
+
+        $validator->throwIfErrors();
+    }
+
+    public static function validateUpdate(array $data): void
+    {
+        $validator = new Validator();
+
+        if (isset($data['title'])) {
+            $validator->length('title', $data['title'], 1, 500);
+        }
+
+        if (isset($data['agenda']) && $data['agenda'] !== '') {
+            $validator->length('agenda', $data['agenda'], 0, 2000);
+        }
+
+        if (isset($data['status'])) {
+            $validator->enum('status', $data['status'], ['SCHEDULED', 'COMPLETED', 'CANCELLED']);
+        }
+
+        if (isset($data['durationMinutes'])) {
+            $validator->intRange('durationMinutes', (int) $data['durationMinutes'], 15, 480);
+        }
+
+        if (isset($data['analysisId'])) {
+            $validator->uuid('analysisId', $data['analysisId']);
+        }
+
+        if (isset($data['incidentId'])) {
+            $validator->uuid('incidentId', $data['incidentId']);
         }
 
         $validator->throwIfErrors();

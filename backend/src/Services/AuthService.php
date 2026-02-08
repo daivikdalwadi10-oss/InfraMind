@@ -8,6 +8,7 @@ use InfraMind\Core\PasswordManager;
 use InfraMind\Core\TokenManager;
 use InfraMind\Core\Logger;
 use InfraMind\Repositories\UserRepository;
+use InfraMind\Repositories\AuditLogRepository;
 use InfraMind\Models\User;
 use InfraMind\Models\UserRole;
 use InfraMind\Exceptions\AuthenticationException;
@@ -22,6 +23,7 @@ class AuthService
     private PasswordManager $passwordManager;
     private TokenManager $tokenManager;
     private Logger $logger;
+    private AuditLogRepository $auditRepository;
 
     public function __construct()
     {
@@ -29,6 +31,7 @@ class AuthService
         $this->passwordManager = new PasswordManager();
         $this->tokenManager = new TokenManager();
         $this->logger = Logger::getInstance();
+        $this->auditRepository = new AuditLogRepository();
     }
 
     /**
@@ -39,6 +42,11 @@ class AuthService
     public function signup(string $email, string $password, string $displayName, string $role): User
     {
         $email = strtolower(trim($email));
+        $role = strtoupper(trim($role));
+
+        if (in_array($role, ['DEVELOPER', 'SYSTEM_ADMIN'], true)) {
+            throw new AuthenticationException('Role not permitted for signup');
+        }
 
         // Check if user already exists
         $existing = $this->userRepository->findByEmail($email);
@@ -61,11 +69,13 @@ class AuthService
             UserRole::from($role),
             $displayName,
             $now,
+            null,
         );
 
         $user = $this->userRepository->create($user);
 
         $this->logger->info("User signed up: $userId ($email) with role: $role");
+        $this->auditRepository->log('AUTH', $userId, 'SIGNUP', $userId, ['email' => $email, 'role' => $role]);
 
         return $user;
     }
@@ -83,17 +93,20 @@ class AuthService
         $user = $this->userRepository->findByEmail($email);
         if (!$user) {
             $this->logger->warning("Login attempt with non-existent email: $email");
+            $this->auditRepository->log('AUTH', $email, 'LOGIN_FAILED', 'SYSTEM', ['reason' => 'User not found']);
             throw new AuthenticationException('Invalid credentials');
         }
 
         // Verify password
         if (!$this->passwordManager->verify($password, $user->passwordHash)) {
             $this->logger->warning("Login attempt with wrong password for: $email");
+            $this->auditRepository->log('AUTH', $user->id, 'LOGIN_FAILED', 'SYSTEM', ['reason' => 'Invalid password']);
             throw new AuthenticationException('Invalid credentials');
         }
 
         if (!$user->isActive) {
             $this->logger->warning("Login attempt with inactive user: $email");
+            $this->auditRepository->log('AUTH', $user->id, 'LOGIN_FAILED', 'SYSTEM', ['reason' => 'Inactive account']);
             throw new AuthenticationException('Account is inactive');
         }
 
@@ -110,6 +123,7 @@ class AuthService
         $refreshToken = $this->tokenManager->generateRefreshToken($user->id);
 
         $this->logger->info("User logged in: {$user->id} ({$email})");
+        $this->auditRepository->log('AUTH', $user->id, 'LOGIN_SUCCESS', $user->id, ['email' => $email]);
 
         return [
             'accessToken' => $accessToken,
