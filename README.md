@@ -6,9 +6,9 @@ Production-ready workflow system with strict IAM, state machine enforcement, and
 
 ## 🏗️ Architecture
 
-- **Frontend**: Next.js 16 (App Router) + TypeScript + Tailwind + shadcn/ui
-- **Backend**: PHP 8.2+ REST API with MVC architecture
-- **Database**: SQLite (production-ready for PostgreSQL/MySQL)
+- **Frontend**: Next.js 16 (App Router) + TypeScript + Tailwind + shadcn/ui (in `frontend/`)
+- **Backend**: PHP 8.2+ REST API with MVC architecture (in `backend/`)
+- **Database**: SQLite by default (MySQL/PostgreSQL supported)
 - **Auth**: JWT-based session authentication
 - **AI**: Google Gemini 2.5-flash via Genkit wrapper
 
@@ -28,7 +28,7 @@ Production-ready workflow system with strict IAM, state machine enforcement, and
     /Validators         → Input validation
     /Core               → Database, Config, Logger, JWT
 
-/src
+/frontend
   /app                  → Next.js routes + Server Actions
   /components           → React UI components
   /lib                  → Types, auth, API client
@@ -52,10 +52,20 @@ php -S localhost:8000 -t public router.php
 
 ```powershell
 npm install
-cp .env.local.example .env.local
+cp frontend/.env.local.example frontend/.env.local
 # Set: NEXT_PUBLIC_API_URL=http://localhost:8000
 # Set: GENKIT_API_KEY=<your-google-api-key>
 npm run dev
+
+### 3. Monorepo Scripts (from repo root)
+
+```powershell
+npm run dev        # Frontend dev server
+npm run build      # Frontend build
+npm run start      # Frontend production start
+npm run lint       # Frontend lint
+npm run typecheck  # Frontend typecheck
+```
 ```
 
 ### 3. Access
@@ -130,6 +140,10 @@ DRAFT → SUBMITTED → APPROVED
 ### Normalized
 - `analysis_hypotheses` - Structured hypothesis storage
 
+### Database Support
+- Default: SQLite (local development)
+- Supported: MySQL 8.0+ / PostgreSQL 14+
+
 ## 🤖 AI Integration (Server-Side Only)
 
 ### Wrapper (`src/ai/genkit.ts`)
@@ -194,7 +208,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000
 LOG_LEVEL=debug
 ```
 
-### Frontend (.env.local)
+### Frontend (frontend/.env.local)
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
 GENKIT_API_KEY=<google-api-key>
@@ -251,4 +265,4 @@ curl http://localhost:8000/api/health
 ---
 
 **Status**: ✅ Complete - IAM enforced, state machine validated, audit compliant
-**Updated**: 2026-02-04
+**Updated**: 2026-02-07

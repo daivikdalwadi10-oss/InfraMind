@@ -17,6 +17,11 @@ composer start
 
 Server runs at `http://localhost:8000`
 
+### Dev Server Notes
+
+- `composer start` and `composer dev` run `php -S localhost:8000 -t public`
+- If you need a custom router, use `php -S localhost:8000 -t public router.php`
+
 ## Architecture Highlights
 
 - **Framework**: Custom lightweight PHP 8.2+ framework
@@ -59,12 +64,16 @@ See [BACKEND_MIGRATION_GUIDE.md](./BACKEND_MIGRATION_GUIDE.md) for complete docu
 ## Commands
 
 ```bash
-npm install           # Install dependencies
-npm run dev          # Start development server
-npm run test         # Run tests
-npm run lint         # Check code style
-npm run migrate      # Run database migrations
-npm run seed         # Seed test data
+composer install      # Install dependencies
+composer start        # Start development server
+composer dev          # Start development server (alias)
+composer test         # Run tests
+composer test:coverage # Generate HTML coverage report
+composer lint         # Check code style
+composer lint:fix     # Auto-fix code style
+composer analyse      # Static analysis
+php bin/migrate.php   # Run database migrations
+php bin/seed.php      # Seed test data
 ```
 
 ## Test Accounts

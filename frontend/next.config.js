@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   turbopack: {
-    root: __dirname,
+    root: '..',
   },
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
