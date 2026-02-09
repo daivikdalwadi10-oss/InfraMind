@@ -115,17 +115,17 @@ const architectureItems = [
 const contributionItems = [
   {
     icon: Monitor,
-    title: 'Developer 1 – Frontend & UI/UX',
+    title: 'Kshitija Vyas – Frontend & UI/UX',
     responsibilities: ['Dashboards', 'Analysis Workbench UI', 'Report views', 'Design system'],
   },
   {
     icon: Database,
-    title: 'Developer 2 – Backend & Data',
+    title: 'Luv Patel – Backend & Data',
     responsibilities: ['PHP APIs', 'Database schema', 'IAM enforcement', 'Audit logging'],
   },
   {
     icon: Sparkles,
-    title: 'Developer 3 – Full Stack & AI Integration',
+    title: 'Daivik Dalwadi – Full Stack & AI Integration',
     responsibilities: ['Workflow orchestration', 'AI hypothesis generation', 'Report automation', 'System integrations'],
   },
 ];
