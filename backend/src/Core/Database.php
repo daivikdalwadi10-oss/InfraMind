@@ -20,7 +20,7 @@ class Database
 
     private function __construct()
     {
-        $this->driver = $_ENV['DB_DRIVER'] ?? 'mysql';
+        $this->driver = $_ENV['DB_DRIVER'] ?? 'sqlite';
         $this->connect();
     }
 
