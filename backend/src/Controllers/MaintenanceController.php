@@ -31,12 +31,14 @@ class MaintenanceController
     {
         $state = $this->platformRepository->getState();
 
-        return (new Response(200))->success([
+        return (new Response(200))->success(
+            [
             'maintenanceEnabled' => (bool) ($state['maintenance_enabled'] ?? false),
             'maintenanceMessage' => $state['maintenance_message'] ?? null,
             'softShutdownEnabled' => (bool) ($state['soft_shutdown_enabled'] ?? false),
             'updatedAt' => $state['updated_at'] ?? null,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -51,13 +53,15 @@ class MaintenanceController
 
         $state = $this->platformRepository->getState();
 
-        return (new Response(200))->success([
+        return (new Response(200))->success(
+            [
             'maintenanceEnabled' => (bool) ($state['maintenance_enabled'] ?? false),
             'maintenanceMessage' => $state['maintenance_message'] ?? null,
             'softShutdownEnabled' => (bool) ($state['soft_shutdown_enabled'] ?? false),
             'lastRestartRequestedAt' => $state['last_restart_requested_at'] ?? null,
             'updatedAt' => $state['updated_at'] ?? null,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -75,18 +79,26 @@ class MaintenanceController
         $message = $request->get('maintenanceMessage');
 
         $state = $this->platformRepository->updateMaintenance($enabled, $message, $user->sub);
-        $this->auditRepository->log('Platform', 'maintenance', $enabled ? 'MAINTENANCE_ENABLED' : 'MAINTENANCE_DISABLED', $user->sub, [
+        $this->auditRepository->log(
+            'Platform',
+            'maintenance',
+            $enabled ? 'MAINTENANCE_ENABLED' : 'MAINTENANCE_DISABLED',
+            $user->sub,
+            [
             'message' => $message,
-        ]);
+            ]
+        );
 
         $this->logger->info('Maintenance mode updated', ['enabled' => $enabled]);
 
-        return (new Response(200))->success([
+        return (new Response(200))->success(
+            [
             'maintenanceEnabled' => (bool) ($state['maintenance_enabled'] ?? false),
             'maintenanceMessage' => $state['maintenance_message'] ?? null,
             'softShutdownEnabled' => (bool) ($state['soft_shutdown_enabled'] ?? false),
             'updatedAt' => $state['updated_at'] ?? null,
-        ]);
+            ]
+        );
     }
 
     private function requireAdmin(Request $request): ?Response

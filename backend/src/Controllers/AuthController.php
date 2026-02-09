@@ -115,9 +115,11 @@ class AuthController
                 return (new Response(401))->error('User not found');
             }
 
-            return (new Response(200))->success([
+            return (new Response(200))->success(
+                [
                 'user' => $user->toArray(),
-            ]);
+                ]
+            );
         } catch (\Exception $e) {
             return (new Response(401))->error('Authentication failed');
         }

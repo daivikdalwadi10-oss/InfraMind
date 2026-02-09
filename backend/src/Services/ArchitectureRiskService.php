@@ -58,11 +58,17 @@ class ArchitectureRiskService
 
         $risk = $this->riskRepository->create($risk);
 
-        $this->auditRepository->log('ArchitectureRisk', $riskId, 'CREATED', $ownerId, [
+        $this->auditRepository->log(
+            'ArchitectureRisk',
+            $riskId,
+            'CREATED',
+            $ownerId,
+            [
             'severity' => $severity,
             'status' => $status,
             'analysisId' => $analysisId,
-        ]);
+            ]
+        );
 
         $this->logger->info("Architecture risk created: $riskId by: $ownerId");
 
@@ -127,10 +133,16 @@ class ArchitectureRiskService
 
         $risk = $this->riskRepository->update($risk);
 
-        $this->auditRepository->log('ArchitectureRisk', $riskId, 'UPDATED', $userId, [
+        $this->auditRepository->log(
+            'ArchitectureRisk',
+            $riskId,
+            'UPDATED',
+            $userId,
+            [
             'before' => $before,
             'after' => $risk->toArray(),
-        ]);
+            ]
+        );
 
         return $risk;
     }

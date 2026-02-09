@@ -62,12 +62,12 @@ This creates:
 - Test user accounts (4 users)
 
 **Test Credentials:**
-```
-Owner:     owner@example.com / password123ABC!
-Manager:   manager@example.com / password123ABC!
-Employee1: employee1@example.com / password123ABC!
-Employee2: employee2@example.com / password123ABC!
-```
+
+Configure local placeholders in backend/.env if you want to document credentials:
+
+- DEV_OWNER_USER / DEV_OWNER_PASSWORD
+- DEV_MANAGER_USER / DEV_MANAGER_PASSWORD
+- DEV_EMPLOYEE_USER / DEV_EMPLOYEE_PASSWORD
 
 ### 5. Start Development Server
 ```bash

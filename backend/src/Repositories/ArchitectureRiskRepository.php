@@ -31,7 +31,9 @@ class ArchitectureRiskRepository
                     analysis_id, created_at, updated_at, resolved_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             $risk->id,
             $risk->title,
             $risk->description,
@@ -42,7 +44,8 @@ class ArchitectureRiskRepository
             $risk->createdAt,
             $risk->updatedAt,
             $risk->resolvedAt,
-        ]);
+            ]
+        );
 
         return $risk;
     }
@@ -94,7 +97,9 @@ class ArchitectureRiskRepository
                     owner_id = ?, analysis_id = ?, updated_at = ?, resolved_at = ?
                 WHERE id = ?';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             $risk->title,
             $risk->description,
             $risk->severity->value,
@@ -104,7 +109,8 @@ class ArchitectureRiskRepository
             $risk->updatedAt,
             $risk->resolvedAt,
             $risk->id,
-        ]);
+            ]
+        );
 
         return $risk;
     }

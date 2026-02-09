@@ -56,10 +56,16 @@ class TaskService
 
         $task = $this->taskRepository->create($task);
 
-        $this->auditRepository->log('Task', $taskId, 'CREATED', $managerId, [
+        $this->auditRepository->log(
+            'Task',
+            $taskId,
+            'CREATED',
+            $managerId,
+            [
             'title' => $title,
             'assignedTo' => $assignedTo,
-        ]);
+            ]
+        );
 
         $this->logger->info("Task created: $taskId by manager: $managerId");
 
@@ -123,9 +129,15 @@ class TaskService
 
         $task = $this->taskRepository->update($task);
 
-        $this->auditRepository->log('Task', $taskId, 'STATUS_CHANGED', $managerId, [
+        $this->auditRepository->log(
+            'Task',
+            $taskId,
+            'STATUS_CHANGED',
+            $managerId,
+            [
             'newStatus' => $newStatus,
-        ]);
+            ]
+        );
 
         return $task;
     }
@@ -137,11 +149,14 @@ class TaskService
     {
         return sprintf(
             '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
             mt_rand(0, 0xffff),
             mt_rand(0, 0x0fff) | 0x4000,
             mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff)
         );
     }
 }

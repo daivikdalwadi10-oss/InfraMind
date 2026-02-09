@@ -51,7 +51,9 @@ export function SidebarNav() {
               href={item.href}
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition',
-                isActive ? 'bg-ink text-white' : 'text-ink hover:bg-slate-100',
+                isActive
+                  ? 'bg-ink text-white dark:bg-white dark:text-slate-900'
+                  : 'text-ink hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800',
               )}
             >
               <Icon className="h-4 w-4" />

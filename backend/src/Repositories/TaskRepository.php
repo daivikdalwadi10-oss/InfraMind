@@ -28,7 +28,9 @@ class TaskRepository
         $sql = 'INSERT INTO tasks (id, title, description, assigned_to, created_by, status, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             $task->id,
             $task->title,
             $task->description,
@@ -37,7 +39,8 @@ class TaskRepository
             $task->status->value,
             $task->createdAt,
             $task->updatedAt,
-        ]);
+            ]
+        );
 
         return $task;
     }
@@ -61,13 +64,16 @@ class TaskRepository
         $sql = "UPDATE tasks SET title = ?, description = ?, assigned_to = ?, status = ?, updated_at = datetime(\"now\")
                 WHERE id = ?";
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             $task->title,
             $task->description,
             $task->assignedTo,
             $task->status->value,
             $task->id,
-        ]);
+            ]
+        );
 
         return $task;
     }

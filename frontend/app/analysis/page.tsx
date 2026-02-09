@@ -40,7 +40,7 @@ export default function AnalysesPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
+        <div className="rounded-2xl border border-white/40 bg-white/60 p-5 shadow-glass backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/50">
           <h1 className="text-2xl font-semibold text-ink">Analyses</h1>
           <p className="text-sm text-muted">Workflow-centric analysis records.</p>
         </div>
@@ -64,20 +64,26 @@ export default function AnalysesPage() {
         ) : null}
 
         {role !== 'OWNER' ? (
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>Analysis list</CardTitle>
               <CardDescription>Open a record to continue the workflow.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {loading ? <p className="text-sm text-muted">Loading analyses...</p> : null}
+              {loading ? (
+                <div className="space-y-3">
+                  <div className="h-4 w-32 rounded-full skeleton" />
+                  <div className="h-16 rounded-2xl skeleton" />
+                  <div className="h-16 rounded-2xl skeleton" />
+                </div>
+              ) : null}
               {error ? <p className="text-sm text-rose-600">{error}</p> : null}
               {!loading && !error && analyses.length === 0 ? (
                 <p className="text-sm text-muted">No analyses found.</p>
               ) : null}
               <div className="grid gap-3">
                 {analyses.map((analysis) => (
-                  <Card key={analysis.id}>
+                  <Card key={analysis.id} className="glass-hover">
                     <CardHeader>
                       <CardTitle>{analysis.title ? analysis.title : `Analysis ${analysis.id}`}</CardTitle>
                       <CardDescription>Task: {analysis.taskId}</CardDescription>

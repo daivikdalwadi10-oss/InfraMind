@@ -32,7 +32,9 @@ class AnalysisRepository
                     readiness_score, revision_count, created_at, updated_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             $analysis->id,
             $analysis->taskId,
             $analysis->title,
@@ -45,7 +47,8 @@ class AnalysisRepository
             $analysis->revisionCount,
             $analysis->createdAt,
             $analysis->updatedAt,
-        ]);
+            ]
+        );
 
         return $analysis;
     }
@@ -91,7 +94,9 @@ class AnalysisRepository
                     revision_count = ?, team_id = ?, updated_at = ?
                 WHERE id = ?';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             $analysis->title,
             $analysis->status->value,
             $analysis->readinessScore,
@@ -100,7 +105,8 @@ class AnalysisRepository
             $analysis->teamId,
             Utils::now(),
             $analysis->id,
-        ]);
+            ]
+        );
 
         return $analysis;
     }
@@ -112,13 +118,16 @@ class AnalysisRepository
     {
         $sql = 'UPDATE analyses SET symptoms = ?, signals = ?, hypotheses = ?, updated_at = ? WHERE id = ?';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             json_encode($symptoms),
             json_encode($signals),
             json_encode($hypotheses),
             Utils::now(),
             $id,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -136,14 +145,17 @@ class AnalysisRepository
             $sql = 'UPDATE analysis_inputs
                     SET environment_context = ?, timeline_events = ?, dependency_impact = ?, risk_classification = ?, updated_at = ?
                     WHERE analysis_id = ?';
-            $this->db->execute($sql, [
+            $this->db->execute(
+                $sql,
+                [
                 json_encode($environmentContext),
                 json_encode($timelineEvents),
                 json_encode($dependencyImpact),
                 json_encode($riskClassification),
                 Utils::now(),
                 $analysisId,
-            ]);
+                ]
+            );
             return;
         }
 
@@ -151,7 +163,9 @@ class AnalysisRepository
                 (id, analysis_id, environment_context, timeline_events, dependency_impact, risk_classification, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             Utils::generateUuid(),
             $analysisId,
             json_encode($environmentContext),
@@ -160,7 +174,8 @@ class AnalysisRepository
             json_encode($riskClassification),
             Utils::now(),
             Utils::now(),
-        ]);
+            ]
+        );
     }
 
     /**
@@ -187,12 +202,15 @@ class AnalysisRepository
                 WHERE a.status = ? AND t.manager_id = ?
                 ORDER BY a.created_at DESC LIMIT ? OFFSET ?';
 
-        $rows = $this->db->fetchAll($sql, [
+        $rows = $this->db->fetchAll(
+            $sql,
+            [
             AnalysisStatus::SUBMITTED->value,
             $managerId,
             $limit,
             $offset,
-        ]);
+            ]
+        );
 
         return array_map([$this, 'mapRowToAnalysis'], $rows);
     }
@@ -240,11 +258,14 @@ class AnalysisRepository
         $sql = 'SELECT COUNT(*) as count FROM analyses
                 WHERE employee_id = ? AND status IN (?, ?)';
 
-        $row = $this->db->fetchOne($sql, [
+        $row = $this->db->fetchOne(
+            $sql,
+            [
             $employeeId,
             AnalysisStatus::DRAFT->value,
             AnalysisStatus::NEEDS_CHANGES->value,
-        ]);
+            ]
+        );
 
         return $row['count'] ?? 0;
     }

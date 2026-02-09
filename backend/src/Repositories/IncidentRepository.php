@@ -31,7 +31,9 @@ class IncidentRepository
                     occurred_at, created_at, updated_at, resolved_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             $incident->id,
             $incident->title,
             $incident->description,
@@ -43,7 +45,8 @@ class IncidentRepository
             $incident->createdAt,
             $incident->updatedAt,
             $incident->resolvedAt,
-        ]);
+            ]
+        );
 
         return $incident;
     }
@@ -109,7 +112,9 @@ class IncidentRepository
                     updated_at = ?, resolved_at = ?
                 WHERE id = ?';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             $incident->title,
             $incident->description,
             $incident->severity->value,
@@ -120,7 +125,8 @@ class IncidentRepository
             $incident->updatedAt,
             $incident->resolvedAt,
             $incident->id,
-        ]);
+            ]
+        );
 
         return $incident;
     }

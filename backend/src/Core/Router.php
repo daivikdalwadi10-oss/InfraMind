@@ -56,9 +56,13 @@ class Router
 
                 try {
                     // Apply middlewares
-                    $response = $this->applyMiddlewares($request, $route['middlewares'], function ($req) use ($route, $params) {
-                        return $this->executeController($req, $route['controller'], $route['action'], $params);
-                    });
+                    $response = $this->applyMiddlewares(
+                        $request,
+                        $route['middlewares'],
+                        function ($req) use ($route, $params) {
+                            return $this->executeController($req, $route['controller'], $route['action'], $params);
+                        }
+                    );
 
                     return $response;
                 } catch (\Exception $e) {
@@ -83,9 +87,12 @@ class Router
         $middleware = array_shift($middlewares);
         $instance = new $middleware();
 
-        return $instance->handle($request, function ($req) use ($middlewares, $next) {
-            return $this->applyMiddlewares($req, $middlewares, $next);
-        });
+        return $instance->handle(
+            $request,
+            function ($req) use ($middlewares, $next) {
+                return $this->applyMiddlewares($req, $middlewares, $next);
+            }
+        );
     }
 
     /**

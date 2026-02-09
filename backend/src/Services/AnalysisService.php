@@ -95,11 +95,17 @@ class AnalysisService
             'CREATED',
         );
 
-        $this->auditRepository->log('Analysis', $analysisId, 'CREATED', $employeeId, [
+        $this->auditRepository->log(
+            'Analysis',
+            $analysisId,
+            'CREATED',
+            $employeeId,
+            [
             'taskId' => $taskId,
             'title' => $task->title,
             'type' => $analysisType,
-        ]);
+            ]
+        );
 
         $this->logger->info("Analysis created: $analysisId for task: $taskId by: $employeeId");
 
@@ -172,16 +178,28 @@ class AnalysisService
                 'CREATED_BY_MANAGER',
             );
 
-            $this->auditRepository->log('Analysis', $analysisId, 'CREATED', $managerId, [
+            $this->auditRepository->log(
+                'Analysis',
+                $analysisId,
+                'CREATED',
+                $managerId,
+                [
                 'title' => $title,
                 'teamId' => $teamId,
                 'assignedTo' => $employeeId,
-            ]);
+                ]
+            );
 
-            $this->auditRepository->log('Task', $taskId, 'CREATED', $managerId, [
+            $this->auditRepository->log(
+                'Task',
+                $taskId,
+                'CREATED',
+                $managerId,
+                [
                 'title' => $title,
                 'assignedTo' => $employeeId,
-            ]);
+                ]
+            );
 
             $this->db->commit();
         } catch (\Throwable $e) {
@@ -288,7 +306,12 @@ class AnalysisService
             $employeeId,
         );
 
-        $this->auditRepository->log('Analysis', $analysisId, 'CONTENT_UPDATED', $employeeId, [
+        $this->auditRepository->log(
+            'Analysis',
+            $analysisId,
+            'CONTENT_UPDATED',
+            $employeeId,
+            [
             'oldState' => $oldState,
             'newState' => [
                 'symptoms' => $analysis->symptoms,
@@ -300,7 +323,8 @@ class AnalysisService
                 'riskClassification' => array_keys($analysis->riskClassification),
                 'readinessScore' => $readinessScore,
             ],
-        ]);
+            ]
+        );
 
         return $analysis;
     }
@@ -346,9 +370,15 @@ class AnalysisService
             'SUBMITTED_BY_EMPLOYEE',
         );
 
-        $this->auditRepository->log('Analysis', $analysisId, 'SUBMITTED', $employeeId, [
+        $this->auditRepository->log(
+            'Analysis',
+            $analysisId,
+            'SUBMITTED',
+            $employeeId,
+            [
             'readinessScore' => $analysis->readinessScore,
-        ]);
+            ]
+        );
 
         $this->logger->info("Analysis submitted: $analysisId by: $employeeId");
 
@@ -397,10 +427,16 @@ class AnalysisService
             'REVIEWED_BY_MANAGER',
         );
 
-        $this->auditRepository->log('Analysis', $analysisId, 'REVIEWED', $managerId, [
+        $this->auditRepository->log(
+            'Analysis',
+            $analysisId,
+            'REVIEWED',
+            $managerId,
+            [
             'decision' => $decision,
             'feedback' => $feedback,
-        ]);
+            ]
+        );
 
         $this->logger->info("Analysis reviewed: $analysisId decision: $decision by: $managerId");
 
@@ -424,7 +460,7 @@ class AnalysisService
     }
 
     /**
-    * Record status change in audit table.
+     * Record status change in audit table.
      */
     private function recordStatusChange(
         string $analysisId,
@@ -477,11 +513,14 @@ class AnalysisService
     {
         return sprintf(
             '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
             mt_rand(0, 0xffff),
             mt_rand(0, 0x0fff) | 0x4000,
             mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff)
         );
     }
 }

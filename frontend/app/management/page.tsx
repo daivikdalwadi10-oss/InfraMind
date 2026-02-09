@@ -160,7 +160,7 @@ export default function ManagementPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
+        <div className="rounded-2xl border border-white/40 bg-white/60 p-5 shadow-glass backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/50">
           <h1 className="text-2xl font-semibold text-ink">Manager Control Panel</h1>
           <p className="text-sm text-muted">Team operations, workload, and staffing visibility.</p>
         </div>
@@ -174,12 +174,29 @@ export default function ManagementPage() {
           </Card>
         ) : null}
 
-        {loading ? <p className="text-sm text-muted">Loading management data...</p> : null}
+        {loading ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="p-6">
+              <div className="space-y-3">
+                <div className="h-4 w-32 rounded-full skeleton" />
+                <div className="h-3 w-48 rounded-full skeleton" />
+                <div className="h-20 rounded-2xl skeleton" />
+              </div>
+            </Card>
+            <Card className="p-6">
+              <div className="space-y-3">
+                <div className="h-4 w-28 rounded-full skeleton" />
+                <div className="h-3 w-44 rounded-full skeleton" />
+                <div className="h-20 rounded-2xl skeleton" />
+              </div>
+            </Card>
+          </div>
+        ) : null}
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
 
         {canView ? (
           <div className="grid gap-4 md:grid-cols-2">
-            <Card>
+            <Card className="glass-hover">
               <CardHeader>
                 <CardTitle>Teams</CardTitle>
                 <CardDescription>Managed teams and ownership.</CardDescription>
@@ -190,7 +207,7 @@ export default function ManagementPage() {
                     <div className="space-y-1">
                       <label className="text-xs uppercase text-muted">Team name</label>
                       <input
-                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                         value={teamName}
                         onChange={(event) => setTeamName(event.target.value)}
                         required
@@ -199,7 +216,7 @@ export default function ManagementPage() {
                     <div className="space-y-1">
                       <label className="text-xs uppercase text-muted">Description</label>
                       <input
-                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                         value={teamDescription}
                         onChange={(event) => setTeamDescription(event.target.value)}
                       />
@@ -212,7 +229,10 @@ export default function ManagementPage() {
                 {teams.length === 0 ? <p className="text-sm text-muted">No teams found.</p> : null}
                 <div className="space-y-2">
                   {teams.map((team) => (
-                    <div key={team.id} className="rounded-lg border border-slate-200 p-3">
+                    <div
+                      key={team.id}
+                      className="glass-hover rounded-lg border border-slate-200/70 bg-white/70 p-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60"
+                    >
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium">{team.name}</p>
                         <Badge>{team.id.slice(0, 6)}</Badge>
@@ -224,7 +244,7 @@ export default function ManagementPage() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="glass-hover">
               <CardHeader>
                 <CardTitle>Employees</CardTitle>
                 <CardDescription>Active staffing and workload visibility.</CardDescription>
@@ -235,7 +255,10 @@ export default function ManagementPage() {
                 ) : (
                   <div className="space-y-2">
                     {sortedEmployees.map((employee) => (
-                      <div key={employee.id} className="rounded-lg border border-slate-200 p-3">
+                      <div
+                        key={employee.id}
+                        className="glass-hover rounded-lg border border-slate-200/70 bg-white/70 p-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60"
+                      >
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-ink">{employee.displayName}</p>
@@ -260,7 +283,7 @@ export default function ManagementPage() {
         ) : null}
 
         {canView ? (
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>Team membership</CardTitle>
               <CardDescription>Assign or remove employees from teams.</CardDescription>
@@ -270,7 +293,7 @@ export default function ManagementPage() {
                 <div className="space-y-1">
                   <label className="text-xs uppercase text-muted">Select team</label>
                   <select
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={selectedTeamId}
                     onChange={(event) => setSelectedTeamId(event.target.value)}
                   >
@@ -285,7 +308,7 @@ export default function ManagementPage() {
                 <div className="space-y-1">
                   <label className="text-xs uppercase text-muted">Add member</label>
                   <select
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={memberToAdd}
                     onChange={(event) => setMemberToAdd(event.target.value)}
                     disabled={!selectedTeamId}
@@ -311,7 +334,10 @@ export default function ManagementPage() {
                 <div className="space-y-2">
                   {members.length === 0 ? <p className="text-sm text-muted">No members yet.</p> : null}
                   {members.map((member) => (
-                    <div key={member.id} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2">
+                    <div
+                      key={member.id}
+                      className="glass-hover flex items-center justify-between rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60"
+                    >
                       <div>
                         <p className="text-sm font-medium text-ink">{member.displayName}</p>
                         <p className="text-xs text-muted">{member.email}</p>
@@ -337,7 +363,7 @@ export default function ManagementPage() {
         ) : null}
 
         {canView ? (
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>Actions</CardTitle>
               <CardDescription>Team membership adjustments happen in the Teams screen.</CardDescription>

@@ -7,4 +7,6 @@ namespace InfraMind\Exceptions;
 /**
  * Base exception class for InfraMind application.
  */
-class Exception extends \Exception {}
+class Exception extends \Exception
+{
+}

@@ -54,9 +54,15 @@ class FeatureFlagController
         }
 
         $flag = $this->featureRepository->upsert($key, $enabled, $description, $user->sub);
-        $this->auditRepository->log('FeatureFlag', $flag['id'] ?? $key, $enabled ? 'ENABLED' : 'DISABLED', $user->sub, [
+        $this->auditRepository->log(
+            'FeatureFlag',
+            $flag['id'] ?? $key,
+            $enabled ? 'ENABLED' : 'DISABLED',
+            $user->sub,
+            [
             'key' => $key,
-        ]);
+            ]
+        );
 
         return (new Response(200))->success($flag);
     }

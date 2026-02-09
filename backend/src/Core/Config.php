@@ -38,8 +38,10 @@ class Config
                     $value = trim($value);
 
                     // Remove quotes
-                    if ((str_starts_with($value, '"') && str_ends_with($value, '"')) ||
-                        (str_starts_with($value, "'") && str_ends_with($value, "'"))) {
+                    if (
+                        (str_starts_with($value, '"') && str_ends_with($value, '"'))
+                        || (str_starts_with($value, "'") && str_ends_with($value, "'"))
+                    ) {
                         $value = substr($value, 1, -1);
                     }
 

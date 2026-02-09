@@ -102,7 +102,7 @@ export default function IncidentsPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
+        <div className="rounded-2xl border border-white/40 bg-white/60 p-5 shadow-glass backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/50">
           <h1 className="text-2xl font-semibold text-ink">Incidents</h1>
           <p className="text-sm text-muted">Operational incidents across the workspace.</p>
         </div>
@@ -117,7 +117,7 @@ export default function IncidentsPage() {
         ) : null}
 
         {canCreate ? (
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>Report incident</CardTitle>
               <CardDescription>Log a new incident for tracking and response.</CardDescription>
@@ -127,7 +127,7 @@ export default function IncidentsPage() {
                 <div className="space-y-1">
                   <label className="text-xs uppercase text-muted">Title</label>
                   <input
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
                     required
@@ -136,7 +136,7 @@ export default function IncidentsPage() {
                 <div className="space-y-1">
                   <label className="text-xs uppercase text-muted">Description</label>
                   <textarea
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     rows={3}
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
@@ -146,7 +146,7 @@ export default function IncidentsPage() {
                   <div className="space-y-1">
                     <label className="text-xs uppercase text-muted">Severity</label>
                     <select
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                       value={severity}
                       onChange={(event) => setSeverity(event.target.value as IncidentSeverity)}
                     >
@@ -161,7 +161,7 @@ export default function IncidentsPage() {
                     <label className="text-xs uppercase text-muted">Occurred at</label>
                     <input
                       type="datetime-local"
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                       value={occurredAt}
                       onChange={(event) => setOccurredAt(event.target.value)}
                     />
@@ -170,7 +170,7 @@ export default function IncidentsPage() {
                     <div className="space-y-1">
                       <label className="text-xs uppercase text-muted">Assign to</label>
                       <select
-                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                         value={assignedTo}
                         onChange={(event) => setAssignedTo(event.target.value)}
                       >
@@ -201,20 +201,26 @@ export default function IncidentsPage() {
           </Card>
         ) : null}
 
-        <Card>
+        <Card className="glass-hover">
           <CardHeader>
             <CardTitle>Incident list</CardTitle>
             <CardDescription>Latest incidents from backend.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {loading ? <p className="text-sm text-muted">Loading incidents...</p> : null}
+            {loading ? (
+              <div className="space-y-3">
+                <div className="h-4 w-28 rounded-full skeleton" />
+                <div className="h-16 rounded-2xl skeleton" />
+                <div className="h-16 rounded-2xl skeleton" />
+              </div>
+            ) : null}
             {error ? <p className="text-sm text-rose-600">{error}</p> : null}
             {!loading && !error && incidents.length === 0 ? (
               <p className="text-sm text-muted">No incidents found.</p>
             ) : null}
             <div className="grid gap-3">
               {incidents.map((incident) => (
-                <Card key={incident.id}>
+                <Card key={incident.id} className="glass-hover">
                   <CardHeader>
                     <CardTitle>{incident.title}</CardTitle>
                     <CardDescription>{incident.description || 'No description'}</CardDescription>

@@ -68,9 +68,15 @@ class AiOutputController
             $payload = $data['payload'] ?? null;
 
             $this->aiOutputRepository->updateStatus($id, $status, $payload);
-            $this->auditRepository->log('AiOutput', $id, 'STATUS_UPDATED', $user->sub, [
+            $this->auditRepository->log(
+                'AiOutput',
+                $id,
+                'STATUS_UPDATED',
+                $user->sub,
+                [
                 'status' => $status->value,
-            ]);
+                ]
+            );
 
             return (new Response(200))->success(['id' => $id, 'status' => $status->value]);
         } catch (ValidationException $e) {

@@ -41,7 +41,7 @@ export default function ReportsPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
+        <div className="rounded-2xl border border-white/40 bg-white/60 p-5 shadow-glass backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/50">
           <h1 className="text-2xl font-semibold text-ink">Reports</h1>
           <p className="text-sm text-muted">Executive summaries generated from approved analyses.</p>
         </div>
@@ -56,13 +56,19 @@ export default function ReportsPage() {
         ) : null}
 
         {role === 'MANAGER' || role === 'OWNER' ? (
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>Report list</CardTitle>
               <CardDescription>Open a report for details or printing.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {loading ? <p className="text-sm text-muted">Loading reports...</p> : null}
+              {loading ? (
+                <div className="space-y-3">
+                  <div className="h-4 w-32 rounded-full skeleton" />
+                  <div className="h-16 rounded-2xl skeleton" />
+                  <div className="h-16 rounded-2xl skeleton" />
+                </div>
+              ) : null}
               {error ? <p className="text-sm text-rose-600">{error}</p> : null}
               {!loading && !error && reports.length === 0 ? (
                 <p className="text-sm text-muted">No reports available.</p>
@@ -72,7 +78,7 @@ export default function ReportsPage() {
                   const analysisId = report.analysisId ?? report.analysis_id ?? 'Unknown';
                   const createdAt = report.createdAt ?? report.created_at ?? '';
                   return (
-                    <Card key={report.id}>
+                    <Card key={report.id} className="glass-hover">
                       <CardHeader>
                         <CardTitle>Report {report.id}</CardTitle>
                         <CardDescription>Analysis {analysisId}</CardDescription>

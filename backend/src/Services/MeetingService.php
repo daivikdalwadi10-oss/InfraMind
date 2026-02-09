@@ -60,10 +60,16 @@ class MeetingService
 
         $meeting = $this->meetingRepository->create($meeting);
 
-        $this->auditRepository->log('Meeting', $meetingId, 'CREATED', $organizerId, [
+        $this->auditRepository->log(
+            'Meeting',
+            $meetingId,
+            'CREATED',
+            $organizerId,
+            [
             'status' => $status,
             'scheduledAt' => $scheduledAt,
-        ]);
+            ]
+        );
 
         $this->logger->info("Meeting created: $meetingId by: $organizerId");
 
@@ -130,10 +136,16 @@ class MeetingService
 
         $meeting = $this->meetingRepository->update($meeting);
 
-        $this->auditRepository->log('Meeting', $meetingId, 'UPDATED', $userId, [
+        $this->auditRepository->log(
+            'Meeting',
+            $meetingId,
+            'UPDATED',
+            $userId,
+            [
             'before' => $before,
             'after' => $meeting->toArray(),
-        ]);
+            ]
+        );
 
         return $meeting;
     }

@@ -71,10 +71,16 @@ class AnnouncementController
         }
 
         $announcement = $this->announcementRepository->create($data, $user->sub);
-        $this->auditRepository->log('Announcement', $announcement['id'] ?? 'unknown', 'CREATED', $user->sub, [
+        $this->auditRepository->log(
+            'Announcement',
+            $announcement['id'] ?? 'unknown',
+            'CREATED',
+            $user->sub,
+            [
             'title' => $announcement['title'] ?? null,
             'severity' => $announcement['severity'] ?? null,
-        ]);
+            ]
+        );
 
         $this->logger->info('Announcement created', ['id' => $announcement['id'] ?? null]);
 

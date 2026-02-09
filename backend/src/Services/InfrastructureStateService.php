@@ -54,10 +54,16 @@ class InfrastructureStateService
 
         $state = $this->stateRepository->create($state);
 
-        $this->auditRepository->log('InfrastructureState', $stateId, 'CREATED', $reportedBy, [
+        $this->auditRepository->log(
+            'InfrastructureState',
+            $stateId,
+            'CREATED',
+            $reportedBy,
+            [
             'component' => $component,
             'status' => $status,
-        ]);
+            ]
+        );
 
         $this->logger->info("Infrastructure state created: $stateId by: $reportedBy");
 
@@ -112,10 +118,16 @@ class InfrastructureStateService
 
         $state = $this->stateRepository->update($state);
 
-        $this->auditRepository->log('InfrastructureState', $stateId, 'UPDATED', $userId, [
+        $this->auditRepository->log(
+            'InfrastructureState',
+            $stateId,
+            'UPDATED',
+            $userId,
+            [
             'before' => $before,
             'after' => $state->toArray(),
-        ]);
+            ]
+        );
 
         return $state;
     }

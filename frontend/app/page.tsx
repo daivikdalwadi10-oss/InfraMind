@@ -19,6 +19,7 @@ import {
   Target,
   Users,
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useSession } from '@/hooks/useSession';
@@ -111,6 +112,24 @@ const architectureItems = [
   { icon: Sparkles, title: 'AI orchestration', description: 'Genkit flows for hypotheses and reporting.' },
 ];
 
+const contributionItems = [
+  {
+    icon: Monitor,
+    title: 'Developer 1 – Frontend & UI/UX',
+    responsibilities: ['Dashboards', 'Analysis Workbench UI', 'Report views', 'Design system'],
+  },
+  {
+    icon: Database,
+    title: 'Developer 2 – Backend & Data',
+    responsibilities: ['PHP APIs', 'Database schema', 'IAM enforcement', 'Audit logging'],
+  },
+  {
+    icon: Sparkles,
+    title: 'Developer 3 – Full Stack & AI Integration',
+    responsibilities: ['Workflow orchestration', 'AI hypothesis generation', 'Report automation', 'System integrations'],
+  },
+];
+
 export default function HomePage() {
   const router = useRouter();
   const { status } = useSession();
@@ -122,13 +141,25 @@ export default function HomePage() {
   }, [status, router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50 text-ink">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50 text-ink dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       <div className="relative overflow-hidden">
-        <div className="absolute -top-32 right-0 h-96 w-96 rounded-full bg-amber-200/40 blur-3xl" />
-        <div className="absolute -bottom-24 left-0 h-96 w-96 rounded-full bg-slate-200/60 blur-3xl" />
-        <div className="absolute left-1/3 top-20 h-72 w-72 rounded-full bg-white/70 blur-3xl" />
+        <div className="absolute -top-32 right-0 h-96 w-96 rounded-full bg-amber-200/40 blur-3xl dark:bg-amber-500/10" />
+        <div className="absolute -bottom-24 left-0 h-96 w-96 rounded-full bg-slate-200/60 blur-3xl dark:bg-slate-800/40" />
+        <div className="absolute left-1/3 top-20 h-72 w-72 rounded-full bg-white/70 blur-3xl dark:bg-slate-900/40" />
 
         <div className="relative mx-auto max-w-6xl px-6 py-16">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-white/70 p-2 shadow-glass backdrop-blur dark:bg-slate-900/60">
+                <Cpu className="h-4 w-4" />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-muted">InfraMind</p>
+                <p className="text-sm font-semibold text-ink">Engineering Intelligence Platform</p>
+              </div>
+            </div>
+            <ThemeToggle />
+          </div>
           <header className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-2xl">
               <p className="text-xs uppercase tracking-[0.3em] text-muted">InfraMind</p>
@@ -151,25 +182,25 @@ export default function HomePage() {
                 </Button>
               </div>
               <div className="mt-6 flex flex-wrap gap-4 text-xs text-muted">
-                <div className="flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-3 py-1 backdrop-blur">
+                <div className="flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-3 py-1 backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/60">
                   <ShieldCheck className="h-3.5 w-3.5" />
                   Workflow enforced
                 </div>
-                <div className="flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-3 py-1 backdrop-blur">
+                <div className="flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-3 py-1 backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/60">
                   <Sparkles className="h-3.5 w-3.5" />
                   AI guided, never auto-approved
                 </div>
-                <div className="flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-3 py-1 backdrop-blur">
+                <div className="flex items-center gap-2 rounded-full border border-white/60 bg-white/60 px-3 py-1 backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/60">
                   <Lock className="h-3.5 w-3.5" />
                   Audit ready
                 </div>
               </div>
             </div>
 
-            <Card className="w-full max-w-md border-white/50 bg-white/60 p-6 shadow-glass backdrop-blur transition hover:-translate-y-1 hover:shadow-xl">
+            <Card className="w-full max-w-md border-white/50 bg-white/60 p-6 shadow-glass backdrop-blur transition hover:-translate-y-1 hover:shadow-xl dark:border-slate-800/60 dark:bg-slate-900/60">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-white/70 p-2">
+                  <div className="rounded-xl bg-white/70 p-2 dark:bg-slate-900/70">
                     <Brain className="h-5 w-5" />
                   </div>
                   <div>
@@ -178,7 +209,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-white/70 p-2">
+                  <div className="rounded-xl bg-white/70 p-2 dark:bg-slate-900/70">
                     <Users className="h-5 w-5" />
                   </div>
                   <div>
@@ -187,7 +218,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="rounded-xl bg-white/70 p-2">
+                  <div className="rounded-xl bg-white/70 p-2 dark:bg-slate-900/70">
                     <Database className="h-5 w-5" />
                   </div>
                   <div>
@@ -201,7 +232,7 @@ export default function HomePage() {
 
           <section className="mt-16">
             <div className="flex items-center gap-3">
-              <div className="rounded-full bg-white/70 p-2">
+              <div className="rounded-full bg-white/70 p-2 dark:bg-slate-900/70">
                 <Target className="h-4 w-4" />
               </div>
               <h2 className="text-2xl font-semibold text-ink">InfraMind purpose</h2>
@@ -210,7 +241,7 @@ export default function HomePage() {
               {purposeItems.map((item) => (
                 <Card
                   key={item.title}
-                  className="border-white/60 bg-white/60 p-6 shadow-glass backdrop-blur transition hover:-translate-y-1 hover:shadow-xl"
+                  className="border-white/60 bg-white/60 p-6 shadow-glass backdrop-blur transition hover:-translate-y-1 hover:shadow-xl dark:border-slate-800/60 dark:bg-slate-900/60"
                 >
                   <item.icon className="h-5 w-5 text-ink" />
                   <h3 className="mt-4 text-base font-semibold text-ink">{item.title}</h3>
@@ -222,7 +253,7 @@ export default function HomePage() {
 
           <section className="mt-16">
             <div className="flex items-center gap-3">
-              <div className="rounded-full bg-white/70 p-2">
+              <div className="rounded-full bg-white/70 p-2 dark:bg-slate-900/70">
                 <ShieldCheck className="h-4 w-4" />
               </div>
               <h2 className="text-2xl font-semibold text-ink">What makes InfraMind different</h2>
@@ -231,10 +262,10 @@ export default function HomePage() {
               {differentiators.map((item) => (
                 <Card
                   key={item.title}
-                  className="border-white/60 bg-white/60 p-6 shadow-glass backdrop-blur transition hover:-translate-y-1 hover:shadow-xl"
+                  className="border-white/60 bg-white/60 p-6 shadow-glass backdrop-blur transition hover:-translate-y-1 hover:shadow-xl dark:border-slate-800/60 dark:bg-slate-900/60"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="rounded-xl bg-white/70 p-2">
+                    <div className="rounded-xl bg-white/70 p-2 dark:bg-slate-900/70">
                       <item.icon className="h-4 w-4" />
                     </div>
                     <h3 className="text-base font-semibold text-ink">{item.title}</h3>
@@ -247,7 +278,7 @@ export default function HomePage() {
 
           <section className="mt-16">
             <div className="flex items-center gap-3">
-              <div className="rounded-full bg-white/70 p-2">
+              <div className="rounded-full bg-white/70 p-2 dark:bg-slate-900/70">
                 <ClipboardList className="h-4 w-4" />
               </div>
               <h2 className="text-2xl font-semibold text-ink">Systems engineering inputs</h2>
@@ -256,9 +287,9 @@ export default function HomePage() {
               {inputItems.map((item) => (
                 <div
                   key={item.label}
-                  className="flex items-center gap-3 rounded-2xl border border-white/60 bg-white/60 px-4 py-4 shadow-glass backdrop-blur transition hover:-translate-y-1 hover:shadow-xl"
+                  className="flex items-center gap-3 rounded-2xl border border-white/60 bg-white/60 px-4 py-4 shadow-glass backdrop-blur transition hover:-translate-y-1 hover:shadow-xl dark:border-slate-800/60 dark:bg-slate-900/60"
                 >
-                  <div className="rounded-xl bg-white/70 p-2">
+                  <div className="rounded-xl bg-white/70 p-2 dark:bg-slate-900/70">
                     <item.icon className="h-4 w-4" />
                   </div>
                   <span className="text-sm font-medium text-ink">{item.label}</span>
@@ -268,9 +299,9 @@ export default function HomePage() {
           </section>
 
           <section className="mt-16 grid gap-6 lg:grid-cols-2">
-            <Card className="border-white/60 bg-white/60 p-6 shadow-glass backdrop-blur">
+            <Card className="border-white/60 bg-white/60 p-6 shadow-glass backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/60">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-white/70 p-2">
+                <div className="rounded-xl bg-white/70 p-2 dark:bg-slate-900/70">
                   <Sparkles className="h-4 w-4" />
                 </div>
                 <h2 className="text-xl font-semibold text-ink">Human + AI responsibility model</h2>
@@ -285,16 +316,19 @@ export default function HomePage() {
               </ul>
             </Card>
 
-            <Card className="border-white/60 bg-white/60 p-6 shadow-glass backdrop-blur">
+            <Card className="border-white/60 bg-white/60 p-6 shadow-glass backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/60">
               <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-white/70 p-2">
+                <div className="rounded-xl bg-white/70 p-2 dark:bg-slate-900/70">
                   <Users className="h-4 w-4" />
                 </div>
                 <h2 className="text-xl font-semibold text-ink">Role-based accountability</h2>
               </div>
               <div className="mt-4 grid gap-4">
                 {roleItems.map((item) => (
-                  <div key={item.title} className="rounded-2xl border border-white/60 bg-white/70 p-4">
+                  <div
+                    key={item.title}
+                    className="rounded-2xl border border-white/60 bg-white/70 p-4 dark:border-slate-800/60 dark:bg-slate-900/60"
+                  >
                     <div className="flex items-center gap-3">
                       <item.icon className="h-4 w-4" />
                       <p className="text-sm font-semibold text-ink">{item.title}</p>
@@ -308,16 +342,16 @@ export default function HomePage() {
 
           <section className="mt-16">
             <div className="flex items-center gap-3">
-              <div className="rounded-full bg-white/70 p-2">
+              <div className="rounded-full bg-white/70 p-2 dark:bg-slate-900/70">
                 <Cpu className="h-4 w-4" />
               </div>
               <h2 className="text-2xl font-semibold text-ink">End-to-end workflow</h2>
             </div>
-            <div className="mt-6 rounded-3xl border border-white/60 bg-white/60 px-6 py-8 shadow-glass backdrop-blur">
+            <div className="mt-6 rounded-3xl border border-white/60 bg-white/60 px-6 py-8 shadow-glass backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/60">
               <div className="flex flex-col items-start gap-6 md:flex-row md:items-center md:justify-between">
                 {workflowSteps.map((step, index) => (
                   <div key={step} className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/80 text-sm font-semibold text-ink">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-white/80 text-sm font-semibold text-ink dark:border-slate-700/60 dark:bg-slate-900/70">
                       {index + 1}
                     </div>
                     <span className="text-sm font-semibold text-ink">{step}</span>
@@ -332,7 +366,7 @@ export default function HomePage() {
 
           <section className="mt-16">
             <div className="flex items-center gap-3">
-              <div className="rounded-full bg-white/70 p-2">
+              <div className="rounded-full bg-white/70 p-2 dark:bg-slate-900/70">
                 <Database className="h-4 w-4" />
               </div>
               <h2 className="text-2xl font-semibold text-ink">Architecture snapshot</h2>
@@ -341,10 +375,10 @@ export default function HomePage() {
               {architectureItems.map((item) => (
                 <Card
                   key={item.title}
-                  className="border-white/60 bg-white/60 p-6 shadow-glass backdrop-blur transition hover:-translate-y-1 hover:shadow-xl"
+                  className="border-white/60 bg-white/60 p-6 shadow-glass backdrop-blur transition hover:-translate-y-1 hover:shadow-xl dark:border-slate-800/60 dark:bg-slate-900/60"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="rounded-xl bg-white/70 p-2">
+                    <div className="rounded-xl bg-white/70 p-2 dark:bg-slate-900/70">
                       <item.icon className="h-4 w-4" />
                     </div>
                     <h3 className="text-base font-semibold text-ink">{item.title}</h3>
@@ -355,20 +389,61 @@ export default function HomePage() {
             </div>
           </section>
 
-          <section className="mt-16 flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-ink px-6 py-8 text-white">
+          <section className="mt-16">
+            <div className="flex items-center gap-3">
+              <div className="rounded-full bg-white/70 p-2 dark:bg-slate-900/70">
+                <Users className="h-4 w-4" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-semibold text-ink">Engineering Contributions & Responsibilities</h2>
+                <p className="text-sm text-muted">
+                  Clear ownership across the system design, workflows, and audit-ready delivery.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 grid gap-6 md:grid-cols-3">
+              {contributionItems.map((item) => (
+                <Card
+                  key={item.title}
+                  className="border-white/60 bg-white/60 p-6 shadow-glass backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/60"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-xl bg-white/70 p-2 dark:bg-slate-900/70">
+                      <item.icon className="h-4 w-4" />
+                    </div>
+                    <h3 className="text-base font-semibold text-ink">{item.title}</h3>
+                  </div>
+                  <ul className="mt-4 space-y-2 text-sm text-muted">
+                    {item.responsibilities.map((responsibility) => (
+                      <li key={responsibility} className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-ink" />
+                        <span>{responsibility}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          <section className="mt-16 flex flex-wrap items-center justify-between gap-4 rounded-3xl bg-slate-900 px-6 py-8 text-white shadow-glass dark:bg-slate-100 dark:text-slate-900">
             <div>
               <h2 className="text-xl font-semibold" style={{ fontFamily: 'Space Grotesk, ui-sans-serif, system-ui' }}>
                 Ready to orchestrate your next incident response?
               </h2>
-              <p className="mt-2 text-sm text-white/80">
+              <p className="mt-2 text-sm text-white/80 dark:text-slate-600">
                 Launch the workspace and start capturing real signals with accountability built in.
               </p>
             </div>
             <div className="flex gap-3">
-              <Button asChild className="rounded-full bg-white text-ink hover:bg-white/90">
+              <Button asChild className="rounded-full bg-white text-slate-900 hover:bg-white/90 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-900/90">
                 <Link href="/login">Get Started</Link>
               </Button>
-              <Button asChild variant="secondary" className="rounded-full border-white/40 text-white hover:bg-white/10">
+              <Button
+                asChild
+                variant="secondary"
+                className="rounded-full border-white/40 text-white hover:bg-white/10 dark:border-slate-300/60 dark:text-slate-900 dark:hover:bg-slate-200"
+              >
                 <Link href="/login">Login</Link>
               </Button>
             </div>

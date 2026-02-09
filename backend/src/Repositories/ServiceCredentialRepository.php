@@ -46,14 +46,26 @@ class ServiceCredentialRepository
             ]
         );
 
-        return $this->db->fetchOne('SELECT id, name, description, status, masked_value, created_by, created_at, updated_at, last_rotated_at FROM service_credentials WHERE id = ?', [$id]) ?? [];
+        return $this->db->fetchOne(
+            'SELECT id, name, description, status, masked_value, created_by, created_at, updated_at, '
+            . 'last_rotated_at FROM service_credentials WHERE id = ?',
+            [$id]
+        ) ?? [];
     }
 
     public function rotate(string $id, string $secret, string $userId): bool
     {
         $count = $this->db->executeAffecting(
-            'UPDATE service_credentials SET status = ?, secret_hash = ?, masked_value = ?, last_rotated_at = ?, updated_at = ? WHERE id = ?',
-            ['ROTATED', hash('sha256', $secret), $this->maskSecret($secret), Utils::now(), Utils::now(), $id]
+            'UPDATE service_credentials SET status = ?, secret_hash = ?, masked_value = ?, '
+            . 'last_rotated_at = ?, updated_at = ? WHERE id = ?',
+            [
+                'ROTATED',
+                hash('sha256', $secret),
+                $this->maskSecret($secret),
+                Utils::now(),
+                Utils::now(),
+                $id,
+            ]
         );
 
         return $count > 0;

@@ -30,7 +30,9 @@ class MeetingRepository
                     organizer_id, analysis_id, incident_id, created_at, updated_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             $meeting->id,
             $meeting->title,
             $meeting->agenda,
@@ -42,7 +44,8 @@ class MeetingRepository
             $meeting->incidentId,
             $meeting->createdAt,
             $meeting->updatedAt,
-        ]);
+            ]
+        );
 
         return $meeting;
     }
@@ -89,7 +92,9 @@ class MeetingRepository
                     organizer_id = ?, analysis_id = ?, incident_id = ?, updated_at = ?
                 WHERE id = ?';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             $meeting->title,
             $meeting->agenda,
             $meeting->status->value,
@@ -100,7 +105,8 @@ class MeetingRepository
             $meeting->incidentId,
             $meeting->updatedAt,
             $meeting->id,
-        ]);
+            ]
+        );
 
         return $meeting;
     }

@@ -15,5 +15,8 @@ backend/sqlite.db
 backend/.env
 backend/database.sqlite
 backend/public/database.sqlite
+backend/.phpunit.result.cache
+backend/.phpunit.cache/
+backend/coverage/
 lint_output.txt
 server.log

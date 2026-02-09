@@ -49,8 +49,7 @@ class ReportService
         string $preventionSteps,
         bool $aiAssisted,
         string $managerId,
-    ): array
-    {
+    ): array {
         $analysis = $this->analysisRepository->findById($analysisId);
         if (!$analysis) {
             throw new NotFoundException('Analysis not found');
@@ -102,10 +101,16 @@ class ReportService
             'REPORT_GENERATED',
         );
 
-        $this->auditRepository->log('Report', $reportId, 'CREATED', $managerId, [
+        $this->auditRepository->log(
+            'Report',
+            $reportId,
+            'CREATED',
+            $managerId,
+            [
             'analysisId' => $analysisId,
             'status' => ReportStatus::FINALIZED->value,
-        ]);
+            ]
+        );
 
         $this->logger->info("Report created: $reportId for analysis: $analysisId by: $managerId");
 
@@ -215,11 +220,14 @@ class ReportService
     {
         return sprintf(
             '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
             mt_rand(0, 0xffff),
             mt_rand(0, 0x0fff) | 0x4000,
             mt_rand(0, 0x3fff) | 0x8000,
-            mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff)
         );
     }
 

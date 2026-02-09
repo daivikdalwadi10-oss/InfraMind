@@ -55,7 +55,8 @@ class AnnouncementRepository
         $targets = $this->normalizeTargets($data['targetRoles'] ?? 'ALL');
 
         $this->db->execute(
-            'INSERT INTO announcements (id, title, message, severity, target_roles, starts_at, ends_at, dismissible, status, created_by, created_at, updated_at)'
+            'INSERT INTO announcements (id, title, message, severity, target_roles, starts_at, '
+            . 'ends_at, dismissible, status, created_by, created_at, updated_at)'
             . ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 $id,

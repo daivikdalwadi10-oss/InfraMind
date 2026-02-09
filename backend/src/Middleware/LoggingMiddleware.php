@@ -18,13 +18,16 @@ class LoggingMiddleware implements Middleware
         $response = $next($request);
         $duration = microtime(true) - $startTime;
 
-        \InfraMind\Core\Logger::getInstance()->info('Request', [
+        \InfraMind\Core\Logger::getInstance()->info(
+            'Request',
+            [
             'method' => $request->getMethod(),
             'path' => $request->getPath(),
             'status' => $response->toArray()['status'] ?? 'unknown',
             'duration_ms' => round($duration * 1000, 2),
             'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
-        ]);
+            ]
+        );
 
         return $response;
     }

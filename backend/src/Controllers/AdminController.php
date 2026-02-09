@@ -70,7 +70,8 @@ class AdminController
             $deployedAt = is_file($file) ? date('Y-m-d H:i:s', filemtime($file)) : Utils::now();
         }
 
-        return (new Response(200))->success([
+        return (new Response(200))->success(
+            [
             'status' => $status,
             'api' => 'OK',
             'database' => $dbOk ? 'CONNECTED' : 'DISCONNECTED',
@@ -78,7 +79,8 @@ class AdminController
             'lastDeployment' => $deployedAt,
             'maintenanceEnabled' => $maintenanceEnabled,
             'softShutdownEnabled' => $softShutdownEnabled,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -96,18 +98,29 @@ class AdminController
         $pendingApprovals = $this->db->fetchOne("SELECT COUNT(*) as count FROM analyses WHERE status = 'SUBMITTED'");
         $aiUsage = $this->db->fetchOne('SELECT COUNT(*) as count FROM ai_outputs WHERE created_at >= ?', [date('Y-m-d H:i:s', strtotime('-24 hours'))]);
 
+        $errorTrendQuery =
+            "SELECT DATE(created_at) as day, COUNT(*) as count "
+            . "FROM audit_logs "
+            . "WHERE action IN ('ERROR','AUTH_FAILURE','AI_FAILURE') "
+            . "AND created_at >= ? "
+            . "GROUP BY DATE(created_at) "
+            . "ORDER BY day DESC "
+            . "LIMIT 7";
+
         $errorTrend = $this->db->fetchAll(
-            "SELECT DATE(created_at) as day, COUNT(*) as count FROM audit_logs WHERE action IN ('ERROR','AUTH_FAILURE','AI_FAILURE') AND created_at >= ? GROUP BY DATE(created_at) ORDER BY day DESC LIMIT 7",
+            $errorTrendQuery,
             [date('Y-m-d H:i:s', strtotime('-7 days'))]
         );
 
-        return (new Response(200))->success([
+        return (new Response(200))->success(
+            [
             'activeUsers' => (int) ($activeUsers['count'] ?? 0),
             'activeAnalyses' => (int) ($activeAnalyses['count'] ?? 0),
             'pendingApprovals' => (int) ($pendingApprovals['count'] ?? 0),
             'aiUsageLast24h' => (int) ($aiUsage['count'] ?? 0),
             'errorTrend' => $errorTrend,
-        ]);
+            ]
+        );
     }
 
     /**
@@ -162,10 +175,12 @@ class AdminController
         $this->auditRepository->log('Platform', 'server', $action, $user->sub, ['reason' => $reason]);
         $this->logger->info('Server action requested', ['action' => $action, 'reason' => $reason]);
 
-        return (new Response(200))->success([
+        return (new Response(200))->success(
+            [
             'action' => $action,
             'state' => $state,
-        ]);
+            ]
+        );
     }
 
     /**

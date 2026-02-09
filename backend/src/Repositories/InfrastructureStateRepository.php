@@ -30,7 +30,9 @@ class InfrastructureStateRepository
                     reported_by, created_at, updated_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             $state->id,
             $state->component,
             $state->status->value,
@@ -39,7 +41,8 @@ class InfrastructureStateRepository
             $state->reportedBy,
             $state->createdAt,
             $state->updatedAt,
-        ]);
+            ]
+        );
 
         return $state;
     }
@@ -86,7 +89,9 @@ class InfrastructureStateRepository
                     reported_by = ?, updated_at = ?
                 WHERE id = ?';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             $state->component,
             $state->status->value,
             $state->summary,
@@ -94,7 +99,8 @@ class InfrastructureStateRepository
             $state->reportedBy,
             $state->updatedAt,
             $state->id,
-        ]);
+            ]
+        );
 
         return $state;
     }

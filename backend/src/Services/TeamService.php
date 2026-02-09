@@ -42,9 +42,15 @@ class TeamService
         $team = new Team($teamId, $name, $description, $managerId, $now, $now);
 
         $this->teamRepository->create($team);
-        $this->auditRepository->log('Team', $teamId, 'CREATED', $managerId, [
+        $this->auditRepository->log(
+            'Team',
+            $teamId,
+            'CREATED',
+            $managerId,
+            [
             'name' => $name,
-        ]);
+            ]
+        );
         $this->logger->info("Team created: $teamId by manager: $managerId");
 
         return $team;
@@ -77,9 +83,15 @@ class TeamService
         $this->db->beginTransaction();
         try {
             $this->teamRepository->addMember($teamId, $userId);
-            $this->auditRepository->log('Team', $teamId, 'MEMBER_ADDED', $managerId, [
+            $this->auditRepository->log(
+                'Team',
+                $teamId,
+                'MEMBER_ADDED',
+                $managerId,
+                [
                 'userId' => $userId,
-            ]);
+                ]
+            );
             $this->db->commit();
         } catch (\Throwable $e) {
             $this->db->rollback();
@@ -100,9 +112,15 @@ class TeamService
         $this->db->beginTransaction();
         try {
             $this->teamRepository->removeMember($teamId, $userId);
-            $this->auditRepository->log('Team', $teamId, 'MEMBER_REMOVED', $managerId, [
+            $this->auditRepository->log(
+                'Team',
+                $teamId,
+                'MEMBER_REMOVED',
+                $managerId,
+                [
                 'userId' => $userId,
-            ]);
+                ]
+            );
             $this->db->commit();
         } catch (\Throwable $e) {
             $this->db->rollback();

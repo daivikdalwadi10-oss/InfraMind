@@ -60,14 +60,11 @@ curl http://localhost:8000/health
 
 ## 🔑 Test Accounts
 
-After seeding:
+After seeding, configure local placeholders in backend/.env if you want to document credentials:
 
-| Role | Email | Password |
-|------|-------|----------|
-| Owner | owner@example.com | Owner123!@# |
-| Manager | manager@example.com | Manager123!@# |
-| Employee 1 | employee1@example.com | Employee123!@# |
-| Employee 2 | employee2@example.com | Employee123!@# |
+- DEV_OWNER_USER / DEV_OWNER_PASSWORD
+- DEV_MANAGER_USER / DEV_MANAGER_PASSWORD
+- DEV_EMPLOYEE_USER / DEV_EMPLOYEE_PASSWORD
 
 ## 📚 Documentation
 
@@ -145,8 +142,8 @@ The entire backend is built with security in mind:
 curl -X POST http://localhost:8000/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "manager@example.com",
-    "password": "Manager123!@#"
+    "email": "<DEV_MANAGER_USER>",
+    "password": "<DEV_MANAGER_PASSWORD>"
   }'
 ```
 

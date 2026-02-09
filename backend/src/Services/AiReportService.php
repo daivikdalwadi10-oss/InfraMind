@@ -33,9 +33,11 @@ class AiReportService
         $this->aiOutputRepository = new AiOutputRepository();
         $this->auditRepository = new AuditLogRepository();
         $this->logger = Logger::getInstance();
-        $this->client = new Client([
+        $this->client = new Client(
+            [
             'timeout' => 25,
-        ]);
+            ]
+        );
     }
 
     public function generateReportDraft(string $analysisId, string $userId, string $role): array
@@ -91,9 +93,15 @@ class AiReportService
             'AI'
         );
 
-        $this->auditRepository->log('AI_OUTPUT', $analysisId, 'REPORT_DRAFT_GENERATED', $userId, [
+        $this->auditRepository->log(
+            'AI_OUTPUT',
+            $analysisId,
+            'REPORT_DRAFT_GENERATED',
+            $userId,
+            [
             'outputId' => $stored['id'] ?? null,
-        ]);
+            ]
+        );
 
         $this->logger->info("AI report draft generated for analysis: $analysisId");
 

@@ -32,7 +32,9 @@ class AuditLogRepository
         $sql = 'INSERT INTO audit_logs (id, entity_type, entity_id, action, user_id, changes, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             Utils::generateUuid(),
             $entityType,
             $entityId,
@@ -40,7 +42,8 @@ class AuditLogRepository
             $userId,
             json_encode($changes),
             Utils::now(),
-        ]);
+            ]
+        );
     }
 
     /**

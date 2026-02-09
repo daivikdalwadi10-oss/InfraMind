@@ -3,7 +3,23 @@
 
 Write-Host "`n=== InfraMind System Startup ===" -ForegroundColor Cyan
 
-function Get-TestCredentials {
+function Get-EnvValue {
+    param([string]$envPath, [string]$key, [string]$default = '')
+    if (!(Test-Path $envPath)) {
+        return $default
+    }
+    $line = Get-Content $envPath | Where-Object { $_ -match "^\s*$key\s*=" } | Select-Object -First 1
+    if (-not $line) {
+        return $default
+    }
+    $value = $line -replace "^\s*$key\s*=\s*", ""
+    if ($value.StartsWith('"') -and $value.EndsWith('"')) {
+        $value = $value.Trim('"')
+    }
+    return $value
+}
+
+function Get-DevCredentials {
     param([string]$envPath)
     $result = @{}
     if (!(Test-Path $envPath)) {
@@ -17,7 +33,7 @@ function Get-TestCredentials {
             if ($value.StartsWith('"') -and $value.EndsWith('"')) {
                 $value = $value.Trim('"')
             }
-            if ($key -like 'TEST_*') {
+            if ($key -like 'DEV_*') {
                 $result[$key] = $value
             }
         }
@@ -25,8 +41,22 @@ function Get-TestCredentials {
     return $result
 }
 
+# Check prerequisites
+Write-Host "`n1. Checking prerequisites..." -ForegroundColor Yellow
+$missing = @()
+if (-not (Get-Command php -ErrorAction SilentlyContinue)) { $missing += 'PHP 8.2+' }
+if (-not (Get-Command composer -ErrorAction SilentlyContinue)) { $missing += 'Composer' }
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) { $missing += 'Node.js' }
+if (-not (Get-Command npm -ErrorAction SilentlyContinue)) { $missing += 'npm' }
+
+if ($missing.Count -gt 0) {
+    Write-Host "   [ERROR] Missing prerequisites: $($missing -join ', ')" -ForegroundColor Red
+    exit 1
+}
+Write-Host "   [OK] Prerequisites available" -ForegroundColor Green
+
 # Check if servers are already running
-Write-Host "`n1. Checking for existing servers..." -ForegroundColor Yellow
+Write-Host "`n2. Checking for existing servers..." -ForegroundColor Yellow
 $php = Get-Process | Where-Object {$_.ProcessName -eq 'php'} | Select-Object -First 1
 $node = Get-Process | Where-Object {$_.ProcessName -eq 'node'} | Select-Object -First 1
 
@@ -36,45 +66,55 @@ if ($php -or $node) {
     Start-Sleep -Seconds 2
 }
 
-# Ensure Docker is available for MySQL/phpMyAdmin
-Write-Host "`n2. Ensuring Docker is available..." -ForegroundColor Yellow
-try {
-    docker --version | Out-Null
-} catch {
-    Write-Host "   [ERROR] Docker is not available" -ForegroundColor Red
-    exit 1
-}
-Write-Host "   [OK] Docker is available" -ForegroundColor Green
-
-# Start MySQL and phpMyAdmin
-Write-Host "`n3. Starting MySQL and phpMyAdmin..." -ForegroundColor Yellow
-Push-Location "$PSScriptRoot\backend"
-docker compose up -d mysql phpmyadmin
-Pop-Location
-Write-Host "   Waiting for MySQL to be ready..." -ForegroundColor Yellow
-$mysqlReady = $false
-for ($i = 0; $i -lt 12; $i++) {
-    try {
-        docker compose -f "$PSScriptRoot\backend\docker-compose.yml" exec -T mysql mysqladmin ping -h 127.0.0.1 -prootpassword | Out-Null
-        $mysqlReady = $true
-        break
-    } catch {
-        Start-Sleep -Seconds 3
-    }
-}
-if (-not $mysqlReady) {
-    Write-Host "   [ERROR] MySQL did not become ready" -ForegroundColor Red
-    exit 1
-}
-Write-Host "   [OK] MySQL is ready" -ForegroundColor Green
-
-# Run backend migrations and seed data
-Write-Host "`n4. Running backend migrations and seed..." -ForegroundColor Yellow
+# Ensure backend .env exists
+Write-Host "`n3. Ensuring backend configuration..." -ForegroundColor Yellow
 Push-Location "$PSScriptRoot\backend"
 if (!(Test-Path ".env")) {
     Copy-Item ".env.example" ".env"
     Write-Host "   [OK] Created backend .env from template" -ForegroundColor Green
 }
+Pop-Location
+
+$envPath = "$PSScriptRoot\backend\.env"
+$dbDriver = (Get-EnvValue -envPath $envPath -key 'DB_DRIVER' -default 'sqlite').ToLowerInvariant()
+
+if ($dbDriver -ne 'sqlite') {
+    Write-Host "`n4. Ensuring Docker is available..." -ForegroundColor Yellow
+    try {
+        docker --version | Out-Null
+    } catch {
+        Write-Host "   [ERROR] Docker is required for DB_DRIVER=$dbDriver" -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "   [OK] Docker is available" -ForegroundColor Green
+
+    Write-Host "`n5. Starting MySQL and phpMyAdmin..." -ForegroundColor Yellow
+    Push-Location "$PSScriptRoot\backend"
+    docker compose up -d mysql phpmyadmin
+    Pop-Location
+    Write-Host "   Waiting for MySQL to be ready..." -ForegroundColor Yellow
+    $mysqlReady = $false
+    for ($i = 0; $i -lt 12; $i++) {
+        try {
+            docker compose -f "$PSScriptRoot\backend\docker-compose.yml" exec -T mysql mysqladmin ping -h 127.0.0.1 -prootpassword | Out-Null
+            $mysqlReady = $true
+            break
+        } catch {
+            Start-Sleep -Seconds 3
+        }
+    }
+    if (-not $mysqlReady) {
+        Write-Host "   [ERROR] MySQL did not become ready" -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "   [OK] MySQL is ready" -ForegroundColor Green
+} else {
+    Write-Host "`n4. SQLite mode detected. Skipping Docker." -ForegroundColor Yellow
+}
+
+# Run backend migrations and seed data
+Write-Host "`n6. Running backend migrations and seed..." -ForegroundColor Yellow
+Push-Location "$PSScriptRoot\backend"
 php bin/migrate.php
 if ($LASTEXITCODE -ne 0) {
     Write-Host "   [ERROR] Migration failed" -ForegroundColor Red
@@ -91,7 +131,7 @@ Write-Host "   [OK] Database migrated/seeded" -ForegroundColor Green
 Pop-Location
 
 # Start backend server
-Write-Host "`n5. Starting PHP backend server..." -ForegroundColor Yellow
+Write-Host "`n7. Starting PHP backend server..." -ForegroundColor Yellow
 $backendJob = Start-Job -ScriptBlock {
     Set-Location "$using:PSScriptRoot\backend"
     php -S localhost:8000 -t public router.php
@@ -112,7 +152,7 @@ try {
 }
 
 # Install frontend dependencies if missing
-Write-Host "`n6. Ensuring frontend dependencies..." -ForegroundColor Yellow
+Write-Host "`n8. Ensuring frontend dependencies..." -ForegroundColor Yellow
 Push-Location "$PSScriptRoot\frontend"
 if (!(Test-Path "node_modules")) {
     npm install
@@ -120,7 +160,7 @@ if (!(Test-Path "node_modules")) {
 Pop-Location
 
 # Start frontend server
-Write-Host "`n7. Starting Next.js frontend..." -ForegroundColor Yellow
+Write-Host "`n9. Starting Next.js frontend..." -ForegroundColor Yellow
 $frontendJob = Start-Job -ScriptBlock {
     Set-Location "$using:PSScriptRoot\frontend"
     npm run dev
@@ -128,7 +168,7 @@ $frontendJob = Start-Job -ScriptBlock {
 Start-Sleep -Seconds 5
 
 # Prewarm frontend to avoid slow first load
-Write-Host "`n8. Warming frontend..." -ForegroundColor Yellow
+Write-Host "`n10. Warming frontend..." -ForegroundColor Yellow
 $frontendReady = $false
 for ($i = 0; $i -lt 10; $i++) {
     try {
@@ -161,16 +201,15 @@ try {
     Write-Host "  Frontend Health: Not reachable yet" -ForegroundColor Yellow
 }
 
-Write-Host "`nTest Credentials:" -ForegroundColor Cyan
-$testEnvPath = "$PSScriptRoot\backend\.env"
-$testCreds = Get-TestCredentials $testEnvPath
-if ($testCreds.Count -gt 0) {
-    if ($testCreds['TEST_EMPLOYEE_EMAIL']) { Write-Host "  Employee: $($testCreds['TEST_EMPLOYEE_EMAIL'])" -ForegroundColor White }
-    if ($testCreds['TEST_MANAGER_EMAIL']) { Write-Host "  Manager:  $($testCreds['TEST_MANAGER_EMAIL'])" -ForegroundColor White }
-    if ($testCreds['TEST_OWNER_EMAIL']) { Write-Host "  Owner:    $($testCreds['TEST_OWNER_EMAIL'])" -ForegroundColor White }
-    Write-Host "  Passwords are stored in backend/.env (not shown)." -ForegroundColor Gray
+Write-Host "`nDeveloper Login Placeholders:" -ForegroundColor Cyan
+$devCreds = Get-DevCredentials $envPath
+if ($devCreds.Count -gt 0) {
+    Write-Host "  DEV_EMPLOYEE_USER: $([bool]$devCreds['DEV_EMPLOYEE_USER'])" -ForegroundColor White
+    Write-Host "  DEV_MANAGER_USER:  $([bool]$devCreds['DEV_MANAGER_USER'])" -ForegroundColor White
+    Write-Host "  DEV_OWNER_USER:    $([bool]$devCreds['DEV_OWNER_USER'])" -ForegroundColor White
+    Write-Host "  Passwords are configured in backend/.env (not shown)." -ForegroundColor Gray
 } else {
-    Write-Host "  Configured in backend/.env (TEST_* variables)." -ForegroundColor White
+    Write-Host "  Configure DEV_* variables in backend/.env for local testing." -ForegroundColor White
 }
 
 Write-Host "`nServers:" -ForegroundColor Cyan

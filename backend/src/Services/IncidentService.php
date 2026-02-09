@@ -59,10 +59,16 @@ class IncidentService
 
         $incident = $this->incidentRepository->create($incident);
 
-        $this->auditRepository->log('Incident', $incidentId, 'CREATED', $reportedBy, [
+        $this->auditRepository->log(
+            'Incident',
+            $incidentId,
+            'CREATED',
+            $reportedBy,
+            [
             'severity' => $severity,
             'assignedTo' => $assignedTo,
-        ]);
+            ]
+        );
 
         $this->logger->info("Incident created: $incidentId by: $reportedBy");
 
@@ -143,10 +149,16 @@ class IncidentService
 
         $incident = $this->incidentRepository->update($incident);
 
-        $this->auditRepository->log('Incident', $incidentId, 'UPDATED', $userId, [
+        $this->auditRepository->log(
+            'Incident',
+            $incidentId,
+            'UPDATED',
+            $userId,
+            [
             'before' => $before,
             'after' => $incident->toArray(),
-        ]);
+            ]
+        );
 
         return $incident;
     }

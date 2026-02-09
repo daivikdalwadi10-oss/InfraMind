@@ -11,13 +11,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        surface: 'hsl(220 20% 98%)',
-        ink: 'hsl(222 47% 11%)',
-        muted: 'hsl(215 16% 47%)',
-        accent: 'hsl(221 83% 53%)',
-        success: 'hsl(142 71% 45%)',
-        warning: 'hsl(38 92% 50%)',
-        danger: 'hsl(0 72% 51%)',
+        surface: 'hsl(var(--surface))',
+        ink: 'hsl(var(--ink))',
+        muted: 'hsl(var(--muted))',
+        accent: 'hsl(var(--accent))',
+        success: 'hsl(var(--success))',
+        warning: 'hsl(var(--warning))',
+        danger: 'hsl(var(--danger))',
       },
       boxShadow: {
         glass: '0 10px 30px rgba(15, 23, 42, 0.08)',

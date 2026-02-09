@@ -76,7 +76,7 @@ export default function DashboardPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
+        <div className="rounded-2xl border border-white/40 bg-white/60 p-5 shadow-glass backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/50">
           <h1 className="text-2xl font-semibold text-ink">Dashboard</h1>
           <p className="text-sm text-muted">Operational workspace health and assignments.</p>
         </div>
@@ -96,13 +96,18 @@ export default function DashboardPage() {
         ) : null}
 
         <div className="grid gap-4 md:grid-cols-3">
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>Backend status</CardTitle>
               <CardDescription>Connectivity check</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              {healthLoading ? <p className="text-sm text-muted">Checking...</p> : null}
+              {healthLoading ? (
+                <div className="space-y-2">
+                  <div className="h-4 w-24 rounded-full skeleton" />
+                  <div className="h-3 w-40 rounded-full skeleton" />
+                </div>
+              ) : null}
               {healthError ? <p className="text-sm text-rose-600">{healthError}</p> : null}
               {health ? (
                 <div className="flex items-center gap-2">
@@ -113,7 +118,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>Role</CardTitle>
               <CardDescription>Access scope</CardDescription>
@@ -124,14 +129,23 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>Tasks snapshot</CardTitle>
               <CardDescription>Latest assignments</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
               {isOwner ? <p className="text-sm text-muted">Owners do not manage tasks.</p> : null}
-              {!isOwner && tasksLoading ? <p className="text-sm text-muted">Loading tasks...</p> : null}
+              {!isOwner && tasksLoading ? (
+                <div className="space-y-2">
+                  <div className="h-3 w-32 rounded-full skeleton" />
+                  <div className="flex gap-2">
+                    <div className="h-5 w-20 rounded-full skeleton" />
+                    <div className="h-5 w-24 rounded-full skeleton" />
+                    <div className="h-5 w-24 rounded-full skeleton" />
+                  </div>
+                </div>
+              ) : null}
               {!isOwner && tasksError ? <p className="text-sm text-rose-600">{tasksError}</p> : null}
               {!isOwner && taskSummary ? (
                 <div className="flex flex-wrap gap-2 text-xs">
@@ -147,7 +161,7 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        <Card>
+        <Card className="glass-hover">
           <CardHeader>
             <CardTitle>Next step</CardTitle>
             <CardDescription>Continue your workflow.</CardDescription>

@@ -42,7 +42,7 @@ class Database
     {
         try {
             $dsn = $this->buildDsn();
-            
+
             // SQLite doesn't need user/password
             if ($this->driver === 'sqlite') {
                 $this->pdo = new PDO(
@@ -103,7 +103,7 @@ class Database
             $dbPath = $_ENV['DB_PATH'] ?? __DIR__ . '/../../database.sqlite';
             return "sqlite:$dbPath";
         }
-        
+
         $host = $_ENV['DB_HOST'] ?? 'localhost';
         $port = $_ENV['DB_PORT'] ?? 3306;
         $dbName = $_ENV['DB_NAME'] ?? 'inframind';

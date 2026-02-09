@@ -33,9 +33,11 @@ class AiHypothesisService
         $this->aiOutputRepository = new AiOutputRepository();
         $this->auditRepository = new AuditLogRepository();
         $this->logger = Logger::getInstance();
-        $this->client = new Client([
+        $this->client = new Client(
+            [
             'timeout' => 20,
-        ]);
+            ]
+        );
     }
 
     public function generateHypotheses(string $analysisId, string $userId, string $role): array
@@ -89,9 +91,15 @@ class AiHypothesisService
             'AI'
         );
 
-        $this->auditRepository->log('AI_OUTPUT', $analysisId, 'HYPOTHESES_GENERATED', $userId, [
+        $this->auditRepository->log(
+            'AI_OUTPUT',
+            $analysisId,
+            'HYPOTHESES_GENERATED',
+            $userId,
+            [
             'outputId' => $stored['id'] ?? null,
-        ]);
+            ]
+        );
 
         $this->logger->info("AI hypotheses generated for analysis: $analysisId");
 

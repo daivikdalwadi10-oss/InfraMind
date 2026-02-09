@@ -58,7 +58,6 @@ Purpose: short, actionable guidance so AI coding agents can be productive immedi
   - `npm run coverage` (run coverage for all tests)
 - ESLint is strict in CI (`--max-warnings=0`). Add/adjust lint rules in `.eslintrc.json`. Prefer `--fix` locally and fix errors before sending PRs.
 - `@typescript-eslint/no-explicit-any` is set to **error**. Replace `any` with precise types (e.g., `unknown` or `Record<string, unknown>`) and prefer typed mocks in tests.
-- Admin SDK will throw during server-side operations if `FIREBASE_ADMIN_CREDENTIALS` is misconfigured — check server logs.
 
 ---
 

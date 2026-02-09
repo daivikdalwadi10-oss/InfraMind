@@ -30,7 +30,9 @@ class UserRepository
         $sql = 'INSERT INTO users (id, email, password_hash, role, display_name, position, created_at, is_active)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             $user->id,
             $user->email,
             $user->passwordHash,
@@ -39,7 +41,8 @@ class UserRepository
             $user->position,
             $user->createdAt,
             $user->isActive ? 1 : 0,
-        ]);
+            ]
+        );
 
         return $user;
     }
@@ -74,13 +77,16 @@ class UserRepository
         $sql = 'UPDATE users SET display_name = ?, role = ?, position = ?, is_active = ?
                 WHERE id = ? AND deleted_at IS NULL';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             $user->displayName,
             $user->role->value,
             $user->position,
             $user->isActive ? 1 : 0,
             $user->id,
-        ]);
+            ]
+        );
 
         return $user;
     }
@@ -192,9 +198,15 @@ class UserRepository
             $row['position'] ?? null,
         );
 
-        $user->lastLoginAt = $row['last_login_at'] ? (is_int($row['last_login_at']) ? date('Y-m-d H:i:s', $row['last_login_at']) : $row['last_login_at']) : null;
+        $lastLoginAt = $row['last_login_at'];
+        $user->lastLoginAt = $lastLoginAt
+            ? (is_int($lastLoginAt) ? date('Y-m-d H:i:s', $lastLoginAt) : $lastLoginAt)
+            : null;
         $user->isActive = (bool) $row['is_active'];
-        $user->deletedAt = $row['deleted_at'] ? (is_int($row['deleted_at']) ? date('Y-m-d H:i:s', $row['deleted_at']) : $row['deleted_at']) : null;
+        $deletedAt = $row['deleted_at'];
+        $user->deletedAt = $deletedAt
+            ? (is_int($deletedAt) ? date('Y-m-d H:i:s', $deletedAt) : $deletedAt)
+            : null;
 
         return $user;
     }

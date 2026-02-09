@@ -24,10 +24,12 @@ class HealthController
                 return (new Response(503))->error('Database check failed');
             }
 
-            return (new Response(200))->success([
+            return (new Response(200))->success(
+                [
                 'status' => 'healthy',
                 'timestamp' => date('Y-m-d H:i:s'),
-            ]);
+                ]
+            );
         } catch (\Exception $e) {
             return (new Response(503))->error('Service unavailable: ' . $e->getMessage());
         }

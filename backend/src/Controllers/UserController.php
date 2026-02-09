@@ -65,8 +65,10 @@ class UserController
             }
 
             // Users can only see their own data unless they're admin
-            if ($currentUser->sub !== $userId &&
-                !in_array($currentUser->role ?? null, ['OWNER', 'MANAGER'], true)) {
+            if (
+                $currentUser->sub !== $userId
+                && !in_array($currentUser->role ?? null, ['OWNER', 'MANAGER'], true)
+            ) {
                 return (new Response(403))->error('Insufficient permissions');
             }
 
@@ -77,7 +79,7 @@ class UserController
             }
 
             $user = $this->userRepository->findById($userId);
-            
+
             if (!$user) {
                 return (new Response(404))->error('User not found');
             }

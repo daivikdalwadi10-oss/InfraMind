@@ -79,7 +79,7 @@ export default function InfrastructurePage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
+        <div className="rounded-2xl border border-white/40 bg-white/60 p-5 shadow-glass backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/50">
           <h1 className="text-2xl font-semibold text-ink">Infrastructure</h1>
           <p className="text-sm text-muted">Track infrastructure health signals.</p>
         </div>
@@ -94,7 +94,7 @@ export default function InfrastructurePage() {
         ) : null}
 
         {canCreate ? (
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>Record infrastructure state</CardTitle>
               <CardDescription>Log a component status update.</CardDescription>
@@ -104,7 +104,7 @@ export default function InfrastructurePage() {
                 <div className="space-y-1">
                   <label className="text-xs uppercase text-muted">Component</label>
                   <input
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={component}
                     onChange={(event) => setComponent(event.target.value)}
                     required
@@ -114,7 +114,7 @@ export default function InfrastructurePage() {
                   <div className="space-y-1">
                     <label className="text-xs uppercase text-muted">Status</label>
                     <select
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                       value={stateStatus}
                       onChange={(event) => setStateStatus(event.target.value as InfrastructureStatus)}
                     >
@@ -129,7 +129,7 @@ export default function InfrastructurePage() {
                     <label className="text-xs uppercase text-muted">Observed at</label>
                     <input
                       type="datetime-local"
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                       value={observedAt}
                       onChange={(event) => setObservedAt(event.target.value)}
                     />
@@ -137,7 +137,7 @@ export default function InfrastructurePage() {
                   <div className="space-y-1">
                     <label className="text-xs uppercase text-muted">Summary</label>
                     <input
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                       value={summary}
                       onChange={(event) => setSummary(event.target.value)}
                     />
@@ -152,20 +152,26 @@ export default function InfrastructurePage() {
           </Card>
         ) : null}
 
-        <Card>
+        <Card className="glass-hover">
           <CardHeader>
             <CardTitle>State list</CardTitle>
             <CardDescription>Latest recorded signals.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {loading ? <p className="text-sm text-muted">Loading states...</p> : null}
+            {loading ? (
+              <div className="space-y-3">
+                <div className="h-4 w-24 rounded-full skeleton" />
+                <div className="h-16 rounded-2xl skeleton" />
+                <div className="h-16 rounded-2xl skeleton" />
+              </div>
+            ) : null}
             {error ? <p className="text-sm text-rose-600">{error}</p> : null}
             {!loading && !error && states.length === 0 ? (
               <p className="text-sm text-muted">No states recorded.</p>
             ) : null}
             <div className="grid gap-3">
               {states.map((item) => (
-                <Card key={item.id}>
+                <Card key={item.id} className="glass-hover">
                   <CardHeader>
                     <CardTitle>{item.component}</CardTitle>
                     <CardDescription>{item.summary || 'No summary'}</CardDescription>

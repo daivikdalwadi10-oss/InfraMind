@@ -1,263 +1,140 @@
 # InfraMind - Enterprise Infrastructure Analysis Platform
 
-## 🎯 System Status: ✅ FULLY OPERATIONAL
+InfraMind is a production-ready incident analysis platform with strict IAM, workflow state enforcement, and auditable decision trails across roles.
 
-Production-ready workflow system with strict IAM, state machine enforcement, and complete audit trails.
+## System Architecture (High Level)
 
-## 🏗️ Architecture
+- **Frontend**: Next.js 16 (App Router) + TypeScript + Tailwind + shadcn/ui
+- **Backend**: PHP 8.2+ REST API (MVC, service layer, repository pattern)
+- **Database**: SQLite by default, with MySQL/PostgreSQL support
+- **Auth**: JWT-based sessions and role enforcement (server-side)
+- **AI**: Genkit flows calling Gemini 2.5 Flash (server-side only)
 
-- **Frontend**: Next.js 16 (App Router) + TypeScript + Tailwind + shadcn/ui (in `frontend/`)
-- **Backend**: PHP 8.2+ REST API with MVC architecture (in `backend/`)
-- **Database**: SQLite by default (MySQL/PostgreSQL supported)
-- **Auth**: JWT-based session authentication
-- **AI**: Google Gemini 2.5-flash via Genkit wrapper
+## Tech Stack
 
-## 📁 Project Structure
+- Next.js, React 18, TypeScript, Tailwind CSS, shadcn/ui
+- PHP 8.2+, Composer, PDO
+- SQLite (default), MySQL/PostgreSQL (optional)
+- Genkit + Gemini for structured AI output
+
+## Project Structure
 
 ```
 /backend
-  /bin                  → migrate.php, seed.php
-  /database/migrations  → SQL schema
-  /public               → index.php (entry point)
+  /bin                  -> migrate.php, seed.php
+  /database/migrations  -> SQL schema
+  /public               -> index.php (entry point)
   /src
-    /Controllers        → HTTP request handlers
-    /Services           → Business logic + state machine
-    /Repositories       → Data access layer
-    /Middleware         → Auth, CORS, Logging, Rate Limit
-    /Models             → Data models & enums
-    /Validators         → Input validation
-    /Core               → Database, Config, Logger, JWT
+    /Controllers        -> HTTP request handlers
+    /Services           -> Business logic + state machine
+    /Repositories       -> Data access layer
+    /Middleware         -> Auth, CORS, Logging, Rate Limit
+    /Models             -> Data models & enums
+    /Validators         -> Input validation
+    /Core               -> Database, Config, Logger, JWT
 
 /frontend
-  /app                  → Next.js routes + Server Actions
-  /components           → React UI components
-  /lib                  → Types, auth, API client
-  /ai                   → Genkit AI flows
+  /app                  -> Next.js routes
+  /components           -> React UI components
+  /lib                  -> Types, auth, API client
+  /ai                   -> Genkit AI flows
+
+/shared
+  /README.md            -> Cross-cutting references (if needed)
 ```
 
-## 🚀 Quick Start
+## Roles and Permissions
 
-### 1. Backend Setup
+- **EMPLOYEE**: create/edit analyses (DRAFT/NEEDS_CHANGES), submit when readiness >= 75
+- **MANAGER**: review analyses, approve/reject, create tasks, generate reports
+- **OWNER**: read-only access to finalized reports
+- **DEVELOPER / SYSTEM_ADMIN**: admin console, maintenance, logs, feature flags
+
+## Core Workflows
+
+1. Task creation (manager)
+2. Analysis creation (employee)
+3. AI hypothesis generation (server-side, JSON only)
+4. Submission gate (readiness >= 75)
+5. Manager review (approve/reject)
+6. Report generation (manager) and owner read-only access
+
+## Quick Start (One Command)
+
+```powershell
+./START.ps1
+```
+
+This script checks prerequisites, configures environments, runs migrations, seeds data, and starts both servers.
+
+## Manual Setup
+
+### Backend
 
 ```powershell
 cd backend
 composer install
-cp .env.example .env  # Configure database path
-php bin/migrate.php   # Create tables
-php bin/seed.php      # Load test data
+cp .env.example .env
+php bin/migrate.php
+php bin/seed.php
 php -S localhost:8000 -t public router.php
 ```
 
-### 2. Frontend Setup
+### Frontend
 
 ```powershell
+cd frontend
 npm install
-cp frontend/.env.local.example frontend/.env.local
-# Set: NEXT_PUBLIC_API_URL=http://localhost:8000
-# Set: GENKIT_API_KEY=<your-google-api-key>
+cp .env.local.example .env.local
 npm run dev
-
-### 3. Monorepo Scripts (from repo root)
-
-```powershell
-npm run dev        # Frontend dev server
-npm run build      # Frontend build
-npm run start      # Frontend production start
-npm run lint       # Frontend lint
-npm run typecheck  # Frontend typecheck
-```
 ```
 
-### 3. Access
-
-- **Frontend**: http://localhost:3000
-- **Backend**: http://localhost:8000/api
-- **Health**: http://localhost:8000/api/health
-
-## 🔐 Test Credentials
-
-| Role     | Email                  | Password        |
-|----------|------------------------|-----------------|
-| Employee | employee1@example.com  | Employee123!@#  |
-| Manager  | manager@example.com    | Manager123!@#   |
-| Owner    | owner@example.com      | Owner123!@#     |
-
-## 🔄 Workflow State Machine
-
-### Analysis Lifecycle (STRICT ENFORCEMENT)
-
-```
-DRAFT → SUBMITTED → APPROVED
-  ↓         ↓
-  ← NEEDS_CHANGES ←
-```
-
-### Valid Transitions
-
-| From           | To              | Who      | Condition          |
-|----------------|-----------------|----------|--------------------|
-| DRAFT          | SUBMITTED       | Employee | Readiness ≥ 75%    |
-| NEEDS_CHANGES  | SUBMITTED       | Employee | After revision     |
-| SUBMITTED      | APPROVED        | Manager  | Review approved    |
-| SUBMITTED      | NEEDS_CHANGES   | Manager  | Feedback provided  |
-
-**All other transitions throw `InvalidStateException`**
-
-## 🛡️ IAM & Authorization
-
-### Backend = Source of Truth
-
-- JWT validation on every API request
-- Role checks in service layer
-- State transition guards
-- Audit logging on all actions
-
-### Role Permissions Matrix
-
-| Action               | EMPLOYEE | MANAGER | OWNER |
-|----------------------|----------|---------|-------|
-| Create analysis      | ✅       | ❌      | ❌    |
-| Edit (DRAFT/NEEDS)   | ✅       | ❌      | ❌    |
-| Submit analysis      | ✅       | ❌      | ❌    |
-| Review analysis      | ❌       | ✅      | ❌    |
-| Create tasks         | ❌       | ✅      | ❌    |
-| Generate reports     | ❌       | ✅      | ❌    |
-| View reports         | ❌       | ✅      | ✅    |
-
-## 📊 Database Schema
-
-### Core Tables
-- `users` - Authentication & roles
-- `tasks` - Work assignments
-- `analyses` - Employee submissions (with symptoms, signals, hypotheses)
-- `reports` - Manager-generated summaries
-
-### Audit Tables
-- `audit_logs` - All user actions
-- `analysis_status_history` - State change tracking
-- `analysis_revisions` - Version history
-
-### Normalized
-- `analysis_hypotheses` - Structured hypothesis storage
-
-### Database Support
-- Default: SQLite (local development)
-- Supported: MySQL 8.0+ / PostgreSQL 14+
-
-## 🤖 AI Integration (Server-Side Only)
-
-### Wrapper (`src/ai/genkit.ts`)
-
-```typescript
-callGenkit({ model, prompt, maxTokens })
-  → { success: boolean, data?: string, error?: string }
-```
-
-### Flows
-
-- `suggestHypotheses` → `[{text, confidence, evidence}]`
-- `draftExecutiveSummary` → `{summary, highlights, recommendedAction}`
-
-### Rules
-
-- All AI calls via Server Actions
-- Responses must be valid JSON
-- Parse errors throw exceptions
-- No partial AI outputs to database
-
-## 📡 API Endpoints
-
-### Auth
-- `POST /api/auth/signup` - Register
-- `POST /api/auth/login` - Get tokens
-- `POST /api/auth/refresh` - Refresh token
-- `POST /api/auth/logout` - End session
-
-### Tasks
-- `GET /api/tasks` - List (role-filtered)
-- `POST /api/tasks` - Create (manager)
-- `GET /api/tasks/:id` - Details
-
-### Analyses
-- `GET /api/analyses` - List (role-filtered)
-- `POST /api/analyses` - Create (employee)
-- `PATCH /api/analyses/:id` - Update (employee, DRAFT/NEEDS_CHANGES)
-- `POST /api/analyses/:id/submit` - Submit (employee, readiness ≥ 75)
-- `POST /api/analyses/:id/review` - Approve/Reject (manager)
-
-### Reports
-- `GET /api/reports` - List (manager/owner)
-- `POST /api/reports` - Generate (manager, from APPROVED)
-
-## 🧪 Testing
-
-```powershell
-npm run test:unit           # Unit tests
-npm run test:integration    # Integration (backend required)
-npm run coverage            # Coverage report
-```
-
-## 🔧 Configuration
+## Environment Variables (No Secrets)
 
 ### Backend (.env)
-```env
-DB_DRIVER=sqlite
-DB_PATH=./database.sqlite
-JWT_SECRET=<64-char-minimum>
-CORS_ALLOWED_ORIGINS=http://localhost:3000
-LOG_LEVEL=debug
-```
 
-### Frontend (frontend/.env.local)
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-GENKIT_API_KEY=<google-api-key>
-```
+- `APP_ENV`, `APP_DEBUG`, `APP_URL`, `SERVER_PORT`
+- `DB_DRIVER` and `DB_PATH` (SQLite) or `DB_HOST`, `DB_NAME`, `DB_USER`
+- `JWT_SECRET` (set in real environments)
+- `CORS_ORIGINS`
+- `GENKIT_API_KEY` (optional)
+- `DEV_EMPLOYEE_USER`, `DEV_MANAGER_USER`, `DEV_OWNER_USER` (placeholders only)
 
-## 🚨 Critical Rules
+### Frontend (.env.local)
 
-1. **Backend Authority**: Frontend NEVER decides permissions
-2. **State Machine**: Invalid transitions rejected with error
-3. **Readiness Gate**: Score ≥ 75 required for submission
-4. **Audit Trail**: All changes logged
-5. **Owner Isolation**: Reports visible only when FINALIZED
-6. **AI JSON**: All AI outputs must parse as JSON
+- `NEXT_PUBLIC_API_URL`
 
-## 🐛 Troubleshooting
+## Local URLs
 
-### Login Fails
-```powershell
-# Test backend
-curl http://localhost:8000/api/health
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000/api
+- Health: http://localhost:8000/api/health
 
-# Verify credentials match test data
-# Check browser DevTools Network tab
-```
+## Deployment Notes
 
-### Invalid State Transition
-- Check current analysis status in database
-- Verify user role matches permission requirement
-- Review AnalysisService state machine logic
+- Set `APP_ENV=production` and `APP_DEBUG=false`
+- Provide a secure `JWT_SECRET` (64+ characters)
+- Configure CORS for production origins
+- Use MySQL/PostgreSQL for production workloads
+- Enable HTTPS and centralized logging
 
-### Database Locked
-- SQLite = single writer limitation
-- Restart backend server
-- Check for stale connections
+## Documentation
 
-## 📈 Production Checklist
+- Backend API: backend/API.md
+- Backend setup: backend/README.md
+- Backend deployment: backend/DEPLOYMENT.md
 
-- [ ] Migrate SQLite → PostgreSQL/MySQL
-- [ ] Generate secure JWT_SECRET (64+ characters)
-- [ ] Enable HTTPS
-- [ ] Update CORS_ALLOWED_ORIGINS
-- [ ] Configure database backups
-- [ ] Set APP_ENV=production, APP_DEBUG=false
-- [ ] Enable rate limiting in production
-- [ ] Set up logging aggregation
+## Validation Checklist (Final Pass)
 
-## 📚 Documentation
+- Auth + IAM enforced server-side
+- Workflow transitions enforced and logged
+- AI outputs parsed as JSON only
+- Reports gated by approval and owner visibility
+- No mock data or placeholder logic in production paths
 
-- Backend API: [`backend/API.md`](backend/API.md)
+## Hackathon Context
+
+InfraMind was originally built for a rapid delivery context and has been hardened into a production-ready architecture with strict IAM, audit logging, and workflow enforcement.
 - Setup Guide: [`backend/SETUP.md`](backend/SETUP.md)
 - Deployment: [`backend/DEPLOYMENT.md`](backend/DEPLOYMENT.md)
 - AI Agent: [`.github/copilot-instructions.md`](.github/copilot-instructions.md)

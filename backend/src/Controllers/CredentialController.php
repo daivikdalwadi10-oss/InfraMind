@@ -59,9 +59,15 @@ class CredentialController
         }
 
         $credential = $this->credentialRepository->create($data, $user->sub);
-        $this->auditRepository->log('Credential', $credential['id'] ?? 'unknown', 'CREATED', $user->sub, [
+        $this->auditRepository->log(
+            'Credential',
+            $credential['id'] ?? 'unknown',
+            'CREATED',
+            $user->sub,
+            [
             'name' => $credential['name'] ?? null,
-        ]);
+            ]
+        );
 
         $this->logger->info('Credential created', ['id' => $credential['id'] ?? null]);
 

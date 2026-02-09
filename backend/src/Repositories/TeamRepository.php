@@ -25,14 +25,17 @@ class TeamRepository
         $sql = 'INSERT INTO teams (id, name, description, manager_id, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?)';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             $team->id,
             $team->name,
             $team->description,
             $team->managerId,
             $team->createdAt,
             $team->updatedAt,
-        ]);
+            ]
+        );
 
         return $team;
     }
@@ -68,12 +71,15 @@ class TeamRepository
         $sql = 'INSERT INTO team_members (id, team_id, user_id, created_at)
                 VALUES (?, ?, ?, ?)';
 
-        $this->db->execute($sql, [
+        $this->db->execute(
+            $sql,
+            [
             Utils::generateUuid(),
             $teamId,
             $userId,
             Utils::now(),
-        ]);
+            ]
+        );
     }
 
     public function removeMember(string $teamId, string $userId): void

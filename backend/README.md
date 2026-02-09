@@ -15,7 +15,7 @@ php bin/seed.php
 composer start
 ```
 
-Server runs at `http://localhost:8000`
+Server runs at http://localhost:8000
 
 ### Dev Server Notes
 
@@ -25,7 +25,7 @@ Server runs at `http://localhost:8000`
 ## Architecture Highlights
 
 - **Framework**: Custom lightweight PHP 8.2+ framework
-- **Database**: MySQL 8.0+ / PostgreSQL 14+ (normalized relational schema)
+- **Database**: SQLite by default, MySQL/PostgreSQL supported
 - **Authentication**: JWT-based with bcrypt password hashing
 - **Authorization**: Role-based access control (RBAC)
 - **Security**: Prepared statements, input validation, CORS, rate limiting
@@ -78,12 +78,11 @@ php bin/seed.php      # Seed test data
 
 ## Test Accounts
 
-After running `npm run seed`:
+After running `composer seed`, the database contains role-based users. Set local placeholders in backend/.env if you want to document credentials:
 
-- **Owner**: owner@example.com / Owner123!@#
-- **Manager**: manager@example.com / Manager123!@#
-- **Employee 1**: employee1@example.com / Employee123!@#
-- **Employee 2**: employee2@example.com / Employee123!@#
+- DEV_OWNER_USER / DEV_OWNER_PASSWORD
+- DEV_MANAGER_USER / DEV_MANAGER_PASSWORD
+- DEV_EMPLOYEE_USER / DEV_EMPLOYEE_PASSWORD
 
 ## API Examples
 
@@ -92,8 +91,8 @@ After running `npm run seed`:
 curl -X POST http://localhost:8000/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "manager@example.com",
-    "password": "Manager123!@#"
+    "email": "<DEV_MANAGER_USER>",
+    "password": "<DEV_MANAGER_PASSWORD>"
   }'
 ```
 

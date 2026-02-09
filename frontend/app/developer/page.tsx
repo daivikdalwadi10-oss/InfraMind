@@ -15,6 +15,7 @@ import {
   SlidersHorizontal,
   Wrench,
 } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { apiRequest } from '@/lib/api';
@@ -188,7 +189,7 @@ export default function DeveloperConsolePage() {
   if (!isAdmin) {
     return (
       <div className="flex min-h-screen items-center justify-center px-6">
-        <Card className="w-full max-w-md border-rose-200 bg-rose-50/60">
+        <Card className="w-full max-w-md border-rose-200 bg-rose-50/60 dark:border-rose-500/40 dark:bg-rose-500/10">
           <CardHeader>
             <CardTitle>Access denied</CardTitle>
           </CardHeader>
@@ -201,38 +202,45 @@ export default function DeveloperConsolePage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface px-6 py-10 text-ink">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 lg:flex-row">
-        <aside className="w-full max-w-xs space-y-2 rounded-2xl border border-slate-200 bg-white/80 p-4 shadow-sm">
-          <div className="px-2 pb-2">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 px-6 py-10 text-ink dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="mx-auto w-full max-w-6xl space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/40 bg-white/60 px-5 py-4 shadow-glass backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/60">
+          <div>
             <p className="text-xs uppercase tracking-[0.3em] text-muted">Developer Console</p>
             <h1 className="mt-2 text-xl font-semibold text-ink">Platform Admin</h1>
             <p className="mt-1 text-xs text-muted">Internal operations and system control</p>
           </div>
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.key;
-            return (
-              <button
-                key={tab.key}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                  isActive ? 'bg-ink text-white' : 'text-ink hover:bg-slate-100'
-                }`}
-                onClick={() => setActiveTab(tab.key)}
-              >
-                <Icon className="h-4 w-4" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </aside>
+          <ThemeToggle />
+        </div>
 
-        <section className="flex-1 space-y-6">
+        <div className="flex w-full flex-col gap-8 lg:flex-row">
+          <aside className="glass-panel w-full max-w-xs space-y-2 rounded-2xl p-4">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  className={`glass-hover flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                    isActive
+                      ? 'bg-ink text-white dark:bg-white dark:text-slate-900'
+                      : 'text-ink hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800'
+                  }`}
+                  onClick={() => setActiveTab(tab.key)}
+                >
+                  <Icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </aside>
+
+          <section className="flex-1 space-y-6">
           {error ? <p className="text-sm text-rose-600">{error}</p> : null}
 
           {activeTab === 'overview' ? (
             <div className="space-y-6">
-              <Card>
+              <Card className="glass-hover">
                 <CardHeader>
                   <CardTitle>System status</CardTitle>
                 </CardHeader>
@@ -252,19 +260,19 @@ export default function DeveloperConsolePage() {
               </Card>
 
               <div className="grid gap-4 md:grid-cols-4">
-                <Card className="p-4">
+                <Card className="glass-hover p-4">
                   <p className="text-xs uppercase text-muted">Active users</p>
                   <p className="mt-2 text-2xl font-semibold text-ink">{insights?.activeUsers ?? 0}</p>
                 </Card>
-                <Card className="p-4">
+                <Card className="glass-hover p-4">
                   <p className="text-xs uppercase text-muted">Active analyses</p>
                   <p className="mt-2 text-2xl font-semibold text-ink">{insights?.activeAnalyses ?? 0}</p>
                 </Card>
-                <Card className="p-4">
+                <Card className="glass-hover p-4">
                   <p className="text-xs uppercase text-muted">Pending approvals</p>
                   <p className="mt-2 text-2xl font-semibold text-ink">{insights?.pendingApprovals ?? 0}</p>
                 </Card>
-                <Card className="p-4">
+                <Card className="glass-hover p-4">
                   <p className="text-xs uppercase text-muted">AI usage (24h)</p>
                   <p className="mt-2 text-2xl font-semibold text-ink">{insights?.aiUsageLast24h ?? 0}</p>
                 </Card>
@@ -273,7 +281,7 @@ export default function DeveloperConsolePage() {
           ) : null}
 
           {activeTab === 'logs' ? (
-            <Card>
+            <Card className="glass-hover">
               <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <CardTitle>Centralized log viewer</CardTitle>
                 <div className="flex flex-wrap gap-2">
@@ -293,9 +301,9 @@ export default function DeveloperConsolePage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs md:grid-cols-2">
+                <div className="grid gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-4 py-3 text-xs shadow-sm backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/60 md:grid-cols-2">
                   <select
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs"
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={logType}
                     onChange={(event) => setLogType(event.target.value)}
                   >
@@ -307,26 +315,26 @@ export default function DeveloperConsolePage() {
                     <option value="error">Errors</option>
                   </select>
                   <input
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs"
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     placeholder="Role filter (MANAGER, OWNER)"
                     value={logRole}
                     onChange={(event) => setLogRole(event.target.value)}
                   />
                   <input
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs"
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     placeholder="User ID filter"
                     value={logUser}
                     onChange={(event) => setLogUser(event.target.value)}
                   />
                   <div className="grid gap-2 sm:grid-cols-2">
                     <input
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs"
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                       placeholder="Start (YYYY-MM-DD)"
                       value={logStart}
                       onChange={(event) => setLogStart(event.target.value)}
                     />
                     <input
-                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs"
+                      className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                       placeholder="End (YYYY-MM-DD)"
                       value={logEnd}
                       onChange={(event) => setLogEnd(event.target.value)}
@@ -340,7 +348,7 @@ export default function DeveloperConsolePage() {
                 {logs.map((entry, index) => (
                   <div
                     key={`${entry.id ?? entry.timestamp ?? 'log'}-${index}`}
-                    className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-ink"
+                    className="glass-hover rounded-xl border border-slate-200/70 bg-white/70 px-4 py-3 text-xs text-ink shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted">
                       <span>{entry.timestamp || entry.created_at || entry.changed_at}</span>
@@ -357,7 +365,7 @@ export default function DeveloperConsolePage() {
           ) : null}
 
           {activeTab === 'maintenance' ? (
-            <Card>
+            <Card className="glass-hover">
               <CardHeader>
                 <CardTitle>Maintenance mode</CardTitle>
               </CardHeader>
@@ -365,7 +373,7 @@ export default function DeveloperConsolePage() {
                 <div className="space-y-2">
                   <label className="text-xs uppercase text-muted">Message</label>
                   <input
-                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={maintenance?.maintenanceMessage ?? ''}
                     onChange={(event) =>
                       setMaintenance((prev) => ({
@@ -407,7 +415,7 @@ export default function DeveloperConsolePage() {
                     Disable maintenance
                   </Button>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-muted">
+                <div className="rounded-xl border border-slate-200/70 bg-white/70 px-4 py-3 text-xs text-muted shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60">
                   Maintenance blocks all non-admin traffic and surfaces the message above.
                 </div>
               </CardContent>
@@ -415,7 +423,7 @@ export default function DeveloperConsolePage() {
           ) : null}
 
           {activeTab === 'announcements' ? (
-            <Card>
+            <Card className="glass-hover">
               <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <CardTitle>System announcements</CardTitle>
                 <Button size="sm" variant="secondary" onClick={() => void loadAnnouncements()}>
@@ -431,7 +439,7 @@ export default function DeveloperConsolePage() {
                 />
                 <div className="space-y-2">
                   {announcements.map((item) => (
-                    <div key={item.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3">
+                    <div key={item.id} className="glass-hover rounded-xl border border-slate-200/70 bg-white/70 px-4 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60">
                       <div className="flex items-center justify-between text-xs text-muted">
                         <span>{item.severity}</span>
                         <span>{item.status}</span>
@@ -446,7 +454,7 @@ export default function DeveloperConsolePage() {
           ) : null}
 
           {activeTab === 'credentials' ? (
-            <Card>
+            <Card className="glass-hover">
               <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <CardTitle>Credential management</CardTitle>
                 <Button size="sm" variant="secondary" onClick={() => void loadCredentials()}>
@@ -462,7 +470,7 @@ export default function DeveloperConsolePage() {
                 />
                 <div className="space-y-2">
                   {credentials.map((item) => (
-                    <div key={item.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm">
+                    <div key={item.id} className="glass-hover rounded-xl border border-slate-200/70 bg-white/70 px-4 py-3 text-sm shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60">
                       <div className="flex items-center justify-between text-xs text-muted">
                         <span>{item.status}</span>
                         <span>{item.masked_value}</span>
@@ -505,13 +513,13 @@ export default function DeveloperConsolePage() {
           ) : null}
 
           {activeTab === 'server' ? (
-            <Card>
+            <Card className="glass-hover">
               <CardHeader>
                 <CardTitle>Manual server control</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <ServerControlForm token={accessToken} onAction={loadMaintenance} setError={setError} />
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900 dark:border-amber-400/40 dark:bg-amber-500/10 dark:text-amber-200">
                   All server actions are logged and require explicit confirmation.
                 </div>
               </CardContent>
@@ -520,13 +528,13 @@ export default function DeveloperConsolePage() {
 
           {activeTab === 'panels' ? (
             <div className="space-y-6">
-              <Card>
+              <Card className="glass-hover">
                 <CardHeader>
                   <CardTitle>User management (view only)</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {users.map((entry) => (
-                    <div key={entry.id} className="rounded-lg border border-slate-200 px-3 py-2 text-xs">
+                    <div key={entry.id} className="glass-hover rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 text-xs shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60">
                       <p className="text-sm font-semibold text-ink">{entry.displayName}</p>
                       <p className="text-xs text-muted">{entry.email} · {entry.role}</p>
                     </div>
@@ -534,13 +542,13 @@ export default function DeveloperConsolePage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="glass-hover">
                 <CardHeader>
                   <CardTitle>Team overview</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {teams.map((team) => (
-                    <div key={team.id} className="rounded-lg border border-slate-200 px-3 py-2 text-xs">
+                    <div key={team.id} className="glass-hover rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 text-xs shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60">
                       <p className="text-sm font-semibold text-ink">{team.name}</p>
                       <p className="text-xs text-muted">{team.description}</p>
                     </div>
@@ -548,14 +556,14 @@ export default function DeveloperConsolePage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="glass-hover">
                 <CardHeader>
                   <CardTitle>Feature flags</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {flags.length === 0 ? <p className="text-sm text-muted">No flags configured.</p> : null}
                   {flags.map((flag) => (
-                    <div key={flag.id} className="rounded-lg border border-slate-200 px-3 py-2 text-xs">
+                    <div key={flag.id} className="glass-hover rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 text-xs shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-semibold text-ink">{flag.flag_key}</p>
                         <span className="text-xs text-muted">{flag.enabled ? 'Enabled' : 'Disabled'}</span>
@@ -566,22 +574,22 @@ export default function DeveloperConsolePage() {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="glass-hover">
                 <CardHeader>
                   <CardTitle>Permission inspection</CardTitle>
                 </CardHeader>
                 <CardContent className="grid gap-3 text-xs text-muted md:grid-cols-3">
-                  <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
+                  <div className="rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60">
                     <ShieldCheck className="h-4 w-4" />
                     <p className="mt-2 text-sm font-semibold text-ink">Role assignments</p>
                     <p className="mt-1">Changes are restricted to backend policies.</p>
                   </div>
-                  <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
+                  <div className="rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60">
                     <Database className="h-4 w-4" />
                     <p className="mt-2 text-sm font-semibold text-ink">Access boundaries</p>
                     <p className="mt-1">IAM rules enforced on all admin endpoints.</p>
                   </div>
-                  <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
+                  <div className="rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60">
                     <Wrench className="h-4 w-4" />
                     <p className="mt-2 text-sm font-semibold text-ink">Operational controls</p>
                     <p className="mt-1">Actions require confirmation and logging.</p>
@@ -591,6 +599,7 @@ export default function DeveloperConsolePage() {
             </div>
           ) : null}
         </section>
+      </div>
       </div>
     </div>
   );
@@ -631,16 +640,16 @@ function AnnouncementForm({
   };
 
   return (
-    <div className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+    <div className="grid gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/60">
       <div className="grid gap-3 md:grid-cols-2">
         <input
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
           placeholder="Title"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
         />
         <select
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
           value={severity}
           onChange={(event) => setSeverity(event.target.value as 'INFO' | 'WARNING' | 'CRITICAL')}
         >
@@ -650,14 +659,14 @@ function AnnouncementForm({
         </select>
       </div>
       <textarea
-        className="min-h-[90px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+        className="min-h-[90px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
         placeholder="Announcement message"
         value={message}
         onChange={(event) => setMessage(event.target.value)}
       />
       <div className="grid gap-3 md:grid-cols-3">
         <input
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
           placeholder="Targets (ALL, MANAGER, EMPLOYEE)"
           value={targets}
           onChange={(event) => setTargets(event.target.value)}
@@ -708,23 +717,23 @@ function CredentialForm({
   };
 
   return (
-    <div className="grid gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4">
+    <div className="grid gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-4 py-4 shadow-sm backdrop-blur dark:border-slate-700/60 dark:bg-slate-900/60">
       <div className="grid gap-3 md:grid-cols-2">
         <input
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
           placeholder="Credential name"
           value={name}
           onChange={(event) => setName(event.target.value)}
         />
         <input
-          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
           placeholder="Description"
           value={description}
           onChange={(event) => setDescription(event.target.value)}
         />
       </div>
       <input
-        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
         placeholder="Secret value"
         type="password"
         value={secret}
@@ -767,7 +776,7 @@ function ServerControlForm({
       <div className="space-y-2">
         <label className="text-xs uppercase text-muted">Reason</label>
         <input
-          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
           value={reason}
           onChange={(event) => setReason(event.target.value)}
           placeholder="Reason for operational action"
