@@ -38,11 +38,7 @@ class UserController
             $limit = min((int) $request->getQuery('limit', 100), 200);
             $offset = (int) $request->getQuery('offset', 0);
 
-            if ($user->role === 'OWNER') {
-                $users = $this->userRepository->listAllEmployeesWithWorkload($limit, $offset);
-            } else {
-                $users = $this->userRepository->listManagedEmployeesWithWorkload($user->sub, $limit, $offset);
-            }
+            $users = $this->userRepository->listAllEmployeesWithWorkload($limit, $offset);
 
             return (new Response(200))->success($users);
         } catch (\Exception $e) {

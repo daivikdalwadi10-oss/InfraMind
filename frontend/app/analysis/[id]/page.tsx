@@ -290,7 +290,7 @@ export default function AnalysisDetailPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
+        <div className="rounded-2xl border border-white/40 bg-white/60 p-5 shadow-glass backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/50">
           <h1 className="text-2xl font-semibold text-ink">Analysis Workbench</h1>
           <p className="text-sm text-muted">Workflow state drives what can be edited.</p>
         </div>
@@ -299,7 +299,7 @@ export default function AnalysisDetailPage() {
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
 
         {analysis ? (
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>{analysis.title ? analysis.title : `Analysis ${analysis.id}`}</CardTitle>
               <CardDescription>Task {analysis.taskId}</CardDescription>
@@ -314,35 +314,35 @@ export default function AnalysisDetailPage() {
 
         {analysis ? (
           <div className="grid gap-4 md:grid-cols-2">
-            <Card>
+            <Card className="glass-hover">
               <CardHeader>
                 <CardTitle>Symptoms</CardTitle>
                 <CardDescription>{editable ? 'Editable' : 'Locked'}</CardDescription>
               </CardHeader>
               <CardContent>
                 <textarea
-                  className="min-h-[140px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                  className="min-h-[140px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                   value={symptoms}
                   onChange={(event) => setSymptoms(event.target.value)}
                   disabled={!editable}
                 />
               </CardContent>
             </Card>
-            <Card>
+            <Card className="glass-hover">
               <CardHeader>
                 <CardTitle>Signals</CardTitle>
                 <CardDescription>{editable ? 'Editable' : 'Locked'}</CardDescription>
               </CardHeader>
               <CardContent>
                 <textarea
-                  className="min-h-[140px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                  className="min-h-[140px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                   value={signals}
                   onChange={(event) => setSignals(event.target.value)}
                   disabled={!editable}
                 />
               </CardContent>
             </Card>
-            <Card>
+            <Card className="glass-hover">
               <CardHeader>
                 <CardTitle>Hypotheses</CardTitle>
                 <CardDescription>{editable ? 'Editable' : 'Locked'}</CardDescription>
@@ -351,7 +351,10 @@ export default function AnalysisDetailPage() {
                 {hypotheses.length === 0 ? <p className="text-sm text-muted">No hypotheses added.</p> : null}
                 <div className="space-y-2">
                   {hypotheses.map((item, index) => (
-                    <div key={`${item.text}-${index}`} className="rounded-lg border border-slate-200 p-3">
+                    <div
+                      key={`${item.text}-${index}`}
+                      className="rounded-lg border border-slate-200/70 bg-white/60 p-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60"
+                    >
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium">{item.text}</p>
                         <span className="text-xs text-muted">{item.confidence}%</span>
@@ -367,15 +370,15 @@ export default function AnalysisDetailPage() {
                   ))}
                 </div>
                 {editable ? (
-                  <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+                  <div className="space-y-2 rounded-lg border border-slate-200/70 bg-white/60 p-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60">
                     <input
-                      className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                       placeholder="Hypothesis"
                       value={newHypothesis}
                       onChange={(event) => setNewHypothesis(event.target.value)}
                     />
                     <input
-                      className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                       type="number"
                       min={0}
                       max={100}
@@ -383,7 +386,7 @@ export default function AnalysisDetailPage() {
                       onChange={(event) => setNewConfidence(Number(event.target.value))}
                     />
                     <textarea
-                      className="min-h-[80px] w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                      className="min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                       placeholder="Evidence (one per line)"
                       value={newEvidence}
                       onChange={(event) => setNewEvidence(event.target.value)}
@@ -395,7 +398,7 @@ export default function AnalysisDetailPage() {
                 ) : null}
               </CardContent>
             </Card>
-            <Card>
+            <Card className="glass-hover">
               <CardHeader>
                 <CardTitle>Validation checklist</CardTitle>
                 <CardDescription>{editable ? 'Complete to unlock submit' : 'Locked'}</CardDescription>
@@ -405,6 +408,7 @@ export default function AnalysisDetailPage() {
                   <label key={key} className="flex items-center gap-2">
                     <input
                       type="checkbox"
+                      className="h-4 w-4 rounded border-slate-300 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent dark:border-slate-600 dark:bg-slate-900"
                       checked={value}
                       onChange={(event) =>
                         setValidation((prev) => ({ ...prev, [key]: event.target.checked }))
@@ -421,7 +425,7 @@ export default function AnalysisDetailPage() {
                 ))}
               </CardContent>
             </Card>
-            <Card>
+            <Card className="glass-hover">
               <CardHeader>
                 <CardTitle>Environment context</CardTitle>
                 <CardDescription>{editable ? 'Capture runtime environment' : 'Locked'}</CardDescription>
@@ -431,7 +435,7 @@ export default function AnalysisDetailPage() {
                   <div className="space-y-1">
                     <label className="text-xs uppercase text-muted">Cloud provider</label>
                     <input
-                      className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                       value={environmentContext.cloudProvider ?? ''}
                       onChange={(event) =>
                         setEnvironmentContext((prev) => ({ ...prev, cloudProvider: event.target.value }))
@@ -442,7 +446,7 @@ export default function AnalysisDetailPage() {
                   <div className="space-y-1">
                     <label className="text-xs uppercase text-muted">Region</label>
                     <input
-                      className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                       value={environmentContext.region ?? ''}
                       onChange={(event) => setEnvironmentContext((prev) => ({ ...prev, region: event.target.value }))}
                       disabled={!editable}
@@ -451,7 +455,7 @@ export default function AnalysisDetailPage() {
                   <div className="space-y-1">
                     <label className="text-xs uppercase text-muted">Service type</label>
                     <input
-                      className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                       value={environmentContext.serviceType ?? ''}
                       onChange={(event) =>
                         setEnvironmentContext((prev) => ({ ...prev, serviceType: event.target.value }))
@@ -462,7 +466,7 @@ export default function AnalysisDetailPage() {
                   <div className="space-y-1">
                     <label className="text-xs uppercase text-muted">Deployment version</label>
                     <input
-                      className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                      className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                       value={environmentContext.deploymentVersion ?? ''}
                       onChange={(event) =>
                         setEnvironmentContext((prev) => ({ ...prev, deploymentVersion: event.target.value }))
@@ -473,7 +477,7 @@ export default function AnalysisDetailPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="glass-hover">
               <CardHeader>
                 <CardTitle>Timeline of events</CardTitle>
                 <CardDescription>{editable ? 'Track key signals over time' : 'Locked'}</CardDescription>
@@ -482,7 +486,7 @@ export default function AnalysisDetailPage() {
                 <div className="space-y-1">
                   <label className="text-xs uppercase text-muted">Deployments</label>
                   <textarea
-                    className="min-h-[80px] w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={joinLines(timelineEvents.deployments)}
                     onChange={(event) =>
                       setTimelineEvents((prev) => ({ ...prev, deployments: parseLines(event.target.value) }))
@@ -493,7 +497,7 @@ export default function AnalysisDetailPage() {
                 <div className="space-y-1">
                   <label className="text-xs uppercase text-muted">Config changes</label>
                   <textarea
-                    className="min-h-[80px] w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={joinLines(timelineEvents.configChanges)}
                     onChange={(event) =>
                       setTimelineEvents((prev) => ({ ...prev, configChanges: parseLines(event.target.value) }))
@@ -504,7 +508,7 @@ export default function AnalysisDetailPage() {
                 <div className="space-y-1">
                   <label className="text-xs uppercase text-muted">Traffic spikes</label>
                   <textarea
-                    className="min-h-[80px] w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={joinLines(timelineEvents.trafficSpikes)}
                     onChange={(event) =>
                       setTimelineEvents((prev) => ({ ...prev, trafficSpikes: parseLines(event.target.value) }))
@@ -515,7 +519,7 @@ export default function AnalysisDetailPage() {
                 <div className="space-y-1">
                   <label className="text-xs uppercase text-muted">Alerts</label>
                   <textarea
-                    className="min-h-[80px] w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={joinLines(timelineEvents.alerts)}
                     onChange={(event) =>
                       setTimelineEvents((prev) => ({ ...prev, alerts: parseLines(event.target.value) }))
@@ -525,7 +529,7 @@ export default function AnalysisDetailPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="glass-hover">
               <CardHeader>
                 <CardTitle>Dependency impact</CardTitle>
                 <CardDescription>{editable ? 'Capture service dependencies' : 'Locked'}</CardDescription>
@@ -534,7 +538,7 @@ export default function AnalysisDetailPage() {
                 <div className="space-y-1">
                   <label className="text-xs uppercase text-muted">Upstream services</label>
                   <textarea
-                    className="min-h-[80px] w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={joinLines(dependencyImpact.upstreamServices)}
                     onChange={(event) =>
                       setDependencyImpact((prev) => ({ ...prev, upstreamServices: parseLines(event.target.value) }))
@@ -545,7 +549,7 @@ export default function AnalysisDetailPage() {
                 <div className="space-y-1">
                   <label className="text-xs uppercase text-muted">Downstream services</label>
                   <textarea
-                    className="min-h-[80px] w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={joinLines(dependencyImpact.downstreamServices)}
                     onChange={(event) =>
                       setDependencyImpact((prev) => ({ ...prev, downstreamServices: parseLines(event.target.value) }))
@@ -556,7 +560,7 @@ export default function AnalysisDetailPage() {
                 <div className="space-y-1">
                   <label className="text-xs uppercase text-muted">Shared infrastructure</label>
                   <textarea
-                    className="min-h-[80px] w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="min-h-[80px] w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={joinLines(dependencyImpact.sharedInfrastructure)}
                     onChange={(event) =>
                       setDependencyImpact((prev) => ({ ...prev, sharedInfrastructure: parseLines(event.target.value) }))
@@ -566,7 +570,7 @@ export default function AnalysisDetailPage() {
                 </div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="glass-hover">
               <CardHeader>
                 <CardTitle>Risk classification</CardTitle>
                 <CardDescription>{editable ? 'Classify impact and severity' : 'Locked'}</CardDescription>
@@ -575,7 +579,7 @@ export default function AnalysisDetailPage() {
                 <div className="space-y-1">
                   <label className="text-xs uppercase text-muted">Customer impact</label>
                   <input
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={riskClassification.customerImpact ?? ''}
                     onChange={(event) =>
                       setRiskClassification((prev) => ({ ...prev, customerImpact: event.target.value }))
@@ -586,7 +590,7 @@ export default function AnalysisDetailPage() {
                 <div className="space-y-1">
                   <label className="text-xs uppercase text-muted">SLA impact</label>
                   <input
-                    className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={riskClassification.slaImpact ?? ''}
                     onChange={(event) => setRiskClassification((prev) => ({ ...prev, slaImpact: event.target.value }))}
                     disabled={!editable}
@@ -595,7 +599,7 @@ export default function AnalysisDetailPage() {
                 <div className="space-y-1">
                   <label className="text-xs uppercase text-muted">Severity level</label>
                   <select
-                    className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                    className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                     value={riskClassification.severityLevel ?? ''}
                     onChange={(event) =>
                       setRiskClassification((prev) => ({
@@ -618,7 +622,7 @@ export default function AnalysisDetailPage() {
         ) : null}
 
         {analysis ? (
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>AI hypotheses</CardTitle>
               <CardDescription>Generate and curate AI suggestions.</CardDescription>
@@ -637,7 +641,10 @@ export default function AnalysisDetailPage() {
                   {aiOutputs.slice(0, 3).map((output) => {
                     const hypothesesPayload = (output.payload as { hypotheses?: Hypothesis[] })?.hypotheses ?? [];
                     return (
-                      <div key={output.id} className="rounded-lg border border-slate-200 p-3">
+                      <div
+                        key={output.id}
+                        className="rounded-lg border border-slate-200/70 bg-white/60 p-3 shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60"
+                      >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="text-xs uppercase text-muted">Output {output.status}</p>
                           {editable ? (
@@ -656,7 +663,10 @@ export default function AnalysisDetailPage() {
                         ) : (
                           <div className="mt-3 space-y-2">
                             {hypothesesPayload.map((item, index) => (
-                              <div key={`${output.id}-${index}`} className="rounded-md border border-slate-200 p-2">
+                              <div
+                                key={`${output.id}-${index}`}
+                                className="rounded-md border border-slate-200/70 bg-white/60 p-2 shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60"
+                              >
                                 <div className="flex items-center justify-between">
                                   <p className="text-sm font-medium">{item.text}</p>
                                   <span className="text-xs text-muted">{item.confidence}%</span>
@@ -681,7 +691,7 @@ export default function AnalysisDetailPage() {
           </Card>
         ) : null}
 
-        <Card>
+        <Card className="glass-hover">
           <CardHeader>
             <CardTitle>Workflow actions</CardTitle>
             <CardDescription>Actions are enforced by backend state.</CardDescription>

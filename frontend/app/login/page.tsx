@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { loginWithEmailPassword, useSession } from '@/hooks/useSession';
@@ -72,6 +73,9 @@ export default function LoginPage() {
             {error ? <p className="text-sm text-rose-600">{error}</p> : null}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Signing in…' : 'Sign in'}
+            </Button>
+            <Button type="button" variant="secondary" className="w-full" asChild>
+              <Link href="/">Back to InfraMind Home</Link>
             </Button>
           </form>
         </CardContent>

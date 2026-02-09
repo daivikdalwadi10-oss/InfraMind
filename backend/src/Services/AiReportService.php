@@ -33,11 +33,14 @@ class AiReportService
         $this->aiOutputRepository = new AiOutputRepository();
         $this->auditRepository = new AuditLogRepository();
         $this->logger = Logger::getInstance();
-        $this->client = new Client(
-            [
+        $clientOptions = [
             'timeout' => 25,
-            ]
-        );
+        ];
+        $caBundle = $_ENV['CURL_CA_BUNDLE'] ?? ($_ENV['SSL_CERT_FILE'] ?? '');
+        if ($caBundle !== '' && is_file($caBundle)) {
+            $clientOptions['verify'] = $caBundle;
+        }
+        $this->client = new Client($clientOptions);
     }
 
     public function generateReportDraft(string $analysisId, string $userId, string $role): array

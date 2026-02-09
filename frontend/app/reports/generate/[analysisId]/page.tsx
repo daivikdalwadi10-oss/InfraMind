@@ -125,7 +125,7 @@ export default function ReportGenerationPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div>
+        <div className="rounded-2xl border border-white/40 bg-white/60 p-5 shadow-glass backdrop-blur dark:border-slate-800/60 dark:bg-slate-900/50">
           <h1 className="text-2xl font-semibold text-ink">Report Generation</h1>
           <p className="text-sm text-muted">Generate executive summary after approval.</p>
         </div>
@@ -134,7 +134,7 @@ export default function ReportGenerationPage() {
         {error ? <p className="text-sm text-rose-600">{error}</p> : null}
 
         {role !== 'MANAGER' ? (
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>Manager access required</CardTitle>
               <CardDescription>Only managers can generate reports.</CardDescription>
@@ -143,7 +143,7 @@ export default function ReportGenerationPage() {
         ) : null}
 
         {analysis && role === 'MANAGER' ? (
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>{analysis.title ? analysis.title : `Analysis ${analysis.id}`}</CardTitle>
               <CardDescription>Task {analysis.taskId}</CardDescription>
@@ -160,14 +160,14 @@ export default function ReportGenerationPage() {
         ) : null}
 
         {role === 'MANAGER' ? (
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>Executive summary</CardTitle>
               <CardDescription>Summarize the approved analysis.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <textarea
-                className="min-h-[200px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                className="min-h-[200px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                 value={executiveSummary}
                 onChange={(event) => setExecutiveSummary(event.target.value)}
                 disabled={!canGenerate}
@@ -177,14 +177,14 @@ export default function ReportGenerationPage() {
         ) : null}
 
         {role === 'MANAGER' ? (
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>Root cause</CardTitle>
               <CardDescription>Primary fault and contributing factors.</CardDescription>
             </CardHeader>
             <CardContent>
               <textarea
-                className="min-h-[160px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                className="min-h-[160px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                 value={rootCause}
                 onChange={(event) => setRootCause(event.target.value)}
                 disabled={!canGenerate}
@@ -194,14 +194,14 @@ export default function ReportGenerationPage() {
         ) : null}
 
         {role === 'MANAGER' ? (
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>Impact</CardTitle>
               <CardDescription>Customer and service impact details.</CardDescription>
             </CardHeader>
             <CardContent>
               <textarea
-                className="min-h-[140px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                className="min-h-[140px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                 value={impact}
                 onChange={(event) => setImpact(event.target.value)}
                 disabled={!canGenerate}
@@ -211,14 +211,14 @@ export default function ReportGenerationPage() {
         ) : null}
 
         {role === 'MANAGER' ? (
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>Resolution</CardTitle>
               <CardDescription>Actions taken to restore service.</CardDescription>
             </CardHeader>
             <CardContent>
               <textarea
-                className="min-h-[140px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                className="min-h-[140px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                 value={resolution}
                 onChange={(event) => setResolution(event.target.value)}
                 disabled={!canGenerate}
@@ -228,14 +228,14 @@ export default function ReportGenerationPage() {
         ) : null}
 
         {role === 'MANAGER' ? (
-          <Card>
+          <Card className="glass-hover">
             <CardHeader>
               <CardTitle>Prevention steps</CardTitle>
               <CardDescription>Prevent recurrence with concrete steps.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <textarea
-                className="min-h-[140px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                className="min-h-[140px] w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100 dark:focus-visible:ring-offset-slate-900"
                 value={preventionSteps}
                 onChange={(event) => setPreventionSteps(event.target.value)}
                 disabled={!canGenerate}
@@ -243,6 +243,7 @@ export default function ReportGenerationPage() {
               <label className="flex items-center gap-2 text-sm text-muted">
                 <input
                   type="checkbox"
+                  className="h-4 w-4 rounded border-slate-300 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent dark:border-slate-600 dark:bg-slate-900"
                   checked={aiAssisted}
                   onChange={(event) => setAiAssisted(event.target.checked)}
                   disabled={!canGenerate}

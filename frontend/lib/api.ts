@@ -87,14 +87,25 @@ function xhrRequest<T>(
     request.onload = () => {
       const contentType = request.getResponseHeader('content-type') ?? '';
       const raw = request.responseText || '';
-      const data = contentType.includes('application/json') && raw
-        ? (JSON.parse(raw) as ApiResponse<T>)
-        : null;
+      const trimmed = raw.trim();
+      const looksLikeJson = trimmed.startsWith('{') || trimmed.startsWith('[');
+      let data: ApiResponse<T> | null = null;
+      if (contentType.includes('application/json') && trimmed && looksLikeJson) {
+        try {
+          data = JSON.parse(trimmed) as ApiResponse<T>;
+        } catch {
+          data = null;
+        }
+      }
 
       if (request.status < 200 || request.status >= 300) {
         resolve({
           success: false,
-          error: data?.error || data?.message || `Request failed with status ${request.status}`,
+          error:
+            data?.error
+            || data?.message
+            || (!looksLikeJson && trimmed ? 'Server returned a non-JSON error response.' : null)
+            || `Request failed with status ${request.status}`,
         });
         return;
       }

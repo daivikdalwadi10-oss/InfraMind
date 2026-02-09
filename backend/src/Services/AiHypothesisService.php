@@ -33,11 +33,14 @@ class AiHypothesisService
         $this->aiOutputRepository = new AiOutputRepository();
         $this->auditRepository = new AuditLogRepository();
         $this->logger = Logger::getInstance();
-        $this->client = new Client(
-            [
+        $clientOptions = [
             'timeout' => 20,
-            ]
-        );
+        ];
+        $caBundle = $_ENV['CURL_CA_BUNDLE'] ?? ($_ENV['SSL_CERT_FILE'] ?? '');
+        if ($caBundle !== '' && is_file($caBundle)) {
+            $clientOptions['verify'] = $caBundle;
+        }
+        $this->client = new Client($clientOptions);
     }
 
     public function generateHypotheses(string $analysisId, string $userId, string $role): array
