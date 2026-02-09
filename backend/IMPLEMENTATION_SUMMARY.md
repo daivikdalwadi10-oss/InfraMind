@@ -2,7 +2,7 @@
 
 ## Project Status: ✅ COMPLETE & OPERATIONAL
 
-The InfraMind backend is fully functional and ready for production use. All 22 API endpoints are operational, database is configured, and all business logic is implemented.
+The InfraMind backend is fully functional and ready for production use. Core API endpoints are operational, the database is configured, and business logic is implemented.
 
 ---
 
@@ -15,13 +15,9 @@ The InfraMind backend is fully functional and ready for production use. All 22 A
 - Custom MVC-based REST API framework
 
 ### 2. ✅ Database Setup
-- **SQLite database** (C:\workspace\inframind\backend\database.sqlite)
-- **11 database tables** created:
-  - users, tasks, analyses, reports
-  - analysis_hypotheses, analysis_revisions
-  - audit_logs, analysis_status_history
-  - (plus 3 audit tables)
-- **4 test users** seeded with credentials
+- **SQLite database** (C:\workspace\inframind\backend\database.sqlite) by default
+- Core tables for users, tasks, analyses, reports, and audit/history
+- Optional MySQL configuration for multi-user environments
 - **Adminer web interface** for database management
 
 ### 3. ✅ Authentication System
@@ -31,37 +27,38 @@ The InfraMind backend is fully functional and ready for production use. All 22 A
 - Token refresh mechanism for extended sessions
 - User registration and login endpoints
 
-### 4. ✅ Core API Endpoints (22 Total)
+### 4. ✅ Core API Endpoints
 
-#### Authentication (5 endpoints)
-- `POST /auth/login` - User login → JWT tokens
-- `POST /auth/signup` - New user registration
-- `GET /auth/me` - Current user profile
-- `POST /auth/refresh` - Refresh access token
-- `GET /health` - System health check
+#### Authentication
+- `POST /api/auth/login` - User login → JWT tokens
+- `POST /api/auth/signup` - New user registration
+- `GET /api/auth/me` - Current user profile
+- `POST /api/auth/refresh` - Refresh access token
+- `GET /api/health` - System health check
 
-#### Task Management (5 endpoints)
-- `POST /tasks` - Create task (Manager)
-- `GET /tasks` - List tasks
-- `GET /tasks/{id}` - Get task details
-- `PUT /tasks/{id}` - Update task (Manager)
-- `PATCH /tasks/{id}/status` - Change status (Manager)
+#### Task Management
+- `POST /api/tasks` - Create task (Manager)
+- `GET /api/tasks` - List tasks
+- `GET /api/tasks/{id}` - Get task details
+- `PUT /api/tasks/{id}/status` - Change status (Manager)
 
-#### Analysis Workflow (7 endpoints)
-- `POST /analyses` - Create analysis (Employee)
-- `GET /analyses` - List analyses
-- `GET /analyses/{id}` - Get analysis details
-- `PUT /analyses/{id}` - Update analysis (Employee author)
-- `POST /analyses/{id}/hypotheses` - Add hypotheses
-- `POST /analyses/{id}/submit` - Submit for manager review
-- `POST /analyses/{id}/review` - Manager approve/reject
+#### Analysis Workflow
+- `POST /api/analyses` - Create analysis (Employee)
+- `POST /api/analyses/manager` - Create assigned analysis (Manager)
+- `GET /api/analyses` - List analyses
+- `GET /api/analyses/{id}` - Get analysis details
+- `PUT /api/analyses/{id}` - Update analysis (Employee author)
+- `POST /api/analyses/{id}/submit` - Submit for manager review
+- `POST /api/analyses/{id}/review` - Manager approve/reject
+- `POST /api/analyses/{id}/ai/hypotheses` - Generate AI hypotheses
+- `GET /api/analyses/{id}/ai/outputs` - List AI outputs
+- `POST /api/analyses/{id}/ai/report-draft` - Generate AI report draft
 
-#### Report Generation (5 endpoints)
-- `POST /reports` - Create report (Manager)
-- `GET /reports` - List reports
-- `GET /reports/{id}` - Get report details
-- `PUT /reports/{id}` - Update report (Manager)
-- `POST /reports/{id}/finalize` - Finalize report (Manager)
+#### Report Generation
+- `POST /api/reports` - Create report (Manager)
+- `GET /api/reports` - List reports
+- `GET /api/reports/{id}` - Get report details
+- `GET /api/reports/{id}/full` - Report with analysis (Manager, Owner)
 
 ### 5. ✅ Business Logic Implementation
 
@@ -112,21 +109,20 @@ Employee DRAFT → Submit (readiness ≥ 75) → SUBMITTED
 
 ```
 Frontend:
-  - Next.js 15 (App Router)
+  - Next.js 16 (App Router)
   - TypeScript
   - Tailwind CSS + shadcn/ui
-  - Firebase Auth integration
 
 Backend:
-  - PHP 8.2.30
-  - SQLite (Development)
+  - PHP 8.2+
+  - SQLite (default) or MySQL (optional)
   - JWT Authentication
   - RESTful API
 
 Database:
   - SQLite 3
   - Adminer web interface
-  - 11 tables with relationships
+  - Core tables with relationships and audit/history
 
 DevOps:
   - PHP Development Server
@@ -159,7 +155,7 @@ c:\workspace\inframind\
 │   │   │   └── ReportService.php
 │   │   ├── Repositories/
 │   │   │   ├── UserRepository.php
-│   │   │   ├── TaskRepository.py
+│   │   │   ├── TaskRepository.php
 │   │   │   ├── AnalysisRepository.php
 │   │   │   ├── ReportRepository.php
 │   │   │   └── AuditLogRepository.php
@@ -202,12 +198,7 @@ last_login_at | is_active | deleted_at
 ```
 
 **Test Users:**
-1. owner@example.com - Owner role
-2. manager@example.com - Manager role
-3. employee1@example.com - Employee role
-4. employee2@example.com - Employee role
-
-All passwords: `password123ABC!`
+Demo users are created by the seed script. Use placeholders in documentation and refer to the seed file for current values.
 
 ### Analysis Workflow Tables
 - **tasks** - Assigned work items
@@ -228,12 +219,12 @@ All passwords: `password123ABC!`
 ### Quick Test
 ```bash
 # Health check
-curl http://localhost:8000/health
+curl http://localhost:8000/api/health
 
 # Login
-curl -X POST http://localhost:8000/auth/login \
+curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"employee1@example.com","password":"password123ABC!"}'
+  -d '{"email":"<DEV_EMPLOYEE_USER>","password":"<DEV_EMPLOYEE_PASSWORD>"}'
 ```
 
 ### Full Test Suite
@@ -349,7 +340,7 @@ php -S localhost:8000 -t public
 ```
 
 ### Production
-1. Switch to PostgreSQL/MySQL
+1. Switch to MySQL (if needed)
 2. Set `APP_ENV=production`
 3. Update `JWT_SECRET` to secure random value
 4. Disable debug mode: `APP_DEBUG=false`
@@ -371,7 +362,7 @@ php -S localhost:8000 -t public
 
 ## Known Limitations
 
-- SQLite designed for development (use PostgreSQL/MySQL for production)
+- SQLite designed for development (use MySQL for production if needed)
 - Rate limiting is IP-based (upgrade to token-based for APIs)
 - No built-in caching (add Redis for high traffic)
 - File-based logging (use centralized logging for production)
@@ -393,7 +384,7 @@ php -S localhost:8000 -t public
 - Set up error tracking (Sentry)
 
 ### Medium Term
-- Migrate to PostgreSQL
+- Migrate to MySQL
 - Implement caching layer (Redis)
 - Add WebSocket support
 - Set up rate limiting service
@@ -422,10 +413,10 @@ php -S localhost:8000 -t public
 Code Files:        25+ PHP files
 Total Lines:       ~5,000 lines of code
 Dependencies:      46 packages installed
-Database Tables:   11 tables
-API Endpoints:     22 endpoints
-Test Users:        4 accounts
-Documentation:     3 comprehensive guides
+Database Tables:   See migration schema
+API Endpoints:     See public/index.php routing
+Test Users:        Optional seed data
+Documentation:     See docs in backend/
 Status:            ✅ Production Ready
 ```
 
@@ -458,4 +449,4 @@ open http://localhost:8000/adminer.php
 **Date Completed:** February 3, 2026
 **Version:** 1.0.0
 **Status:** ✅ OPERATIONAL
-**Ready for Production:** Yes (after PostgreSQL migration)
+**Ready for Production:** Yes (after MySQL migration if needed)

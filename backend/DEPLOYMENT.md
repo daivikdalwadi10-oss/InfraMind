@@ -22,12 +22,7 @@ GRANT ALL PRIVILEGES ON inframind.* TO 'inframind'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
-**PostgreSQL:**
-```sql
-CREATE DATABASE inframind;
-CREATE USER inframind WITH PASSWORD 'strong_password_here';
-GRANT ALL PRIVILEGES ON DATABASE inframind TO inframind;
-```
+SQLite is suitable for single-node deployments, but MySQL is recommended for production workloads.
 
 ### 2. Run Migrations
 
@@ -211,7 +206,7 @@ session.cookie_samesite = Lax
 ; /etc/systemd/system/inframind-api.service
 [Unit]
 Description=InfraMind API Service
-After=network.target mysql.service
+After=network.target
 
 [Service]
 Type=simple
@@ -252,7 +247,7 @@ WantedBy=multi-user.target
 #!/bin/bash
 # /usr/local/bin/check-inframind-health.sh
 
-ENDPOINT="https://api.inframind.com/health"
+ENDPOINT="https://api.inframind.com/api/health"
 RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "$ENDPOINT")
 
 if [ "$RESPONSE" != "200" ]; then
@@ -373,7 +368,7 @@ bantime = 3600
 
 7. **Verify health**
    ```bash
-   curl https://api.inframind.com/health
+   curl https://api.inframind.com/api/health
    ```
 
 ## Performance Tuning

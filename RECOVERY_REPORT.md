@@ -3,6 +3,8 @@
 **Date**: 2026-02-04  
 **Status**: ✅ **COMPLETE - FULLY OPERATIONAL**
 
+This report reflects a recovery snapshot. See git history for current state and counts.
+
 ---
 
 ## Executive Summary
@@ -41,10 +43,9 @@ InfraMind has undergone a complete controlled system recovery, eliminating all i
 4. Seeded test data: `php bin/seed.php`
 
 **Database Created**:
-- **8 tables**: users, tasks, analyses, reports, audit_logs, analysis_status_history, analysis_revisions, analysis_hypotheses
-- **4 users**: owner, manager, employee1, employee2 (all with bcrypt-hashed passwords)
-- **2 tasks**: "Investigate API Latency", "Review Database Security"
-- **2 analyses**: LATENCY (82% readiness), SECURITY (65% readiness)
+- Core tables for users, tasks, analyses, reports, AI outputs, and audit/history
+- Seeded demo users (optional)
+- Sample tasks and analyses seeded
 - **Foreign keys**: Enabled and validated
 - **Indexes**: Created on all critical columns
 
@@ -162,7 +163,7 @@ InfraMind has undergone a complete controlled system recovery, eliminating all i
 |--------------------|------------|----------------------------------|
 | **Backend API**    | ✅ Running | `http://localhost:8000`          |
 | **Frontend**       | ✅ Running | `http://localhost:3000`          |
-| **Database**       | ✅ Healthy | SQLite, 8 tables, test data      |
+| **Database**       | ✅ Healthy | SQLite, core tables, test data   |
 | **Authentication** | ✅ Working | JWT tokens, role-based access    |
 | **State Machine**  | ✅ Enforced| Strict transitions, audit trail  |
 | **AI Integration** | ✅ Ready   | Genkit flows (server-side only)  |
@@ -171,11 +172,7 @@ InfraMind has undergone a complete controlled system recovery, eliminating all i
 
 ## Test Credentials
 
-| Role     | Email                 | Password       |
-|----------|-----------------------|----------------|
-| Employee | employee1@example.com | Employee123!@# |
-| Manager  | manager@example.com   | Manager123!@#  |
-| Owner    | owner@example.com     | Owner123!@#    |
+If you run `php bin/seed.php`, demo users are created for local testing. See the seed script for current emails and passwords.
 
 ---
 
@@ -226,9 +223,9 @@ php bin/seed.php
 - **Type Safety**: Shared types in `src/lib/types.ts`
 
 ### Database (SQLite)
-- **8 Core Tables**: Normalized schema with foreign keys
-- **3 Audit Tables**: Complete history and versioning
-- **Indexes**: Optimized queries on all critical columns
+- Core workflow and audit tables with foreign keys
+- Status history and revisions for compliance
+- Indexes on critical columns
 
 ---
 
@@ -261,7 +258,7 @@ php bin/seed.php
 
 Before deploying to production:
 
-- [ ] Migrate database from SQLite to PostgreSQL/MySQL
+- [ ] Migrate database from SQLite to MySQL (if needed)
 - [ ] Generate secure `JWT_SECRET` (64+ characters, cryptographically random)
 - [ ] Enable HTTPS with SSL certificate
 - [ ] Update `CORS_ALLOWED_ORIGINS` to production domain

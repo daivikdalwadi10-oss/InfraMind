@@ -4,103 +4,24 @@ This guide explains how to update the existing Next.js frontend to work with the
 
 ## Base URL Configuration
 
-Update your frontend to use the new backend URL:
+Update your frontend to use the backend URL:
 
 ```typescript
-// src/config/api.ts (create this file)
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-export const API_ENDPOINTS = {
-  // Auth
-  auth: {
-    signup: '/auth/signup',
-    login: '/auth/login',
-    refresh: '/auth/refresh',
-    me: '/auth/me',
-  },
-  // Tasks
-  tasks: {
-    list: '/tasks',
-    create: '/tasks',
-    get: (id) => `/tasks/${id}`,
-    updateStatus: (id) => `/tasks/${id}/status`,
-  },
-  // Analyses
-  analyses: {
-    list: '/analyses',
-    create: '/analyses',
-    get: (id) => `/analyses/${id}`,
-    update: (id) => `/analyses/${id}`,
-    submit: (id) => `/analyses/${id}/submit`,
-    review: (id) => `/analyses/${id}/review`,
-  },
-  // Reports
-  reports: {
-    list: '/reports',
-    create: '/reports',
-    get: (id) => `/reports/${id}`,
-    getFull: (id) => `/reports/${id}/full`,
-  },
-};
+// frontend/lib/api.ts (already in repo)
+const SERVER_API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// apiRequest normalizes paths to /api/* and uses SERVER_API_BASE_URL on the server.
 ```
 
 ## API Client Helper
 
-Create an API client wrapper:
+Use the existing API helper:
 
 ```typescript
-// src/lib/api.ts
-import axios, { AxiosInstance } from 'axios';
-import { API_BASE_URL } from '@/config/api';
+import { apiRequest } from '@/lib/api';
 
-class ApiClient {
-  private client: AxiosInstance;
-  private accessToken: string | null = null;
-
-  constructor() {
-    this.client = axios.create({
-      baseURL: API_BASE_URL,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    this.client.interceptors.request.use((config) => {
-      if (this.accessToken) {
-        config.headers.Authorization = `Bearer ${this.accessToken}`;
-      }
-      return config;
-    });
-
-    this.client.interceptors.response.use(
-      (response) => response.data,
-      (error) => {
-        if (error.response?.status === 401) {
-          // Handle token refresh or logout
-        }
-        throw error.response?.data || error;
-      }
-    );
-  }
-
-  setAccessToken(token: string) {
-    this.accessToken = token;
-  }
-
-  async post<T>(url: string, data?: any): Promise<T> {
-    return this.client.post(url, data);
-  }
-
-  async get<T>(url: string): Promise<T> {
-    return this.client.get(url);
-  }
-
-  async put<T>(url: string, data?: any): Promise<T> {
-    return this.client.put(url, data);
-  }
-}
-
-export const apiClient = new ApiClient();
+// Example: list tasks
+const response = await apiRequest('GET', '/tasks', undefined, accessToken);
+if (!response.success) throw new Error(response.error || 'Failed to load tasks');
 ```
 
 ## Authentication Updates
@@ -116,7 +37,7 @@ const idToken = await result.user.getIdToken();
 **After (PHP Backend):**
 ```typescript
 export async function loginAction(email: string, password: string) {
-  const response = await fetch('http://localhost:8000/auth/login', {
+  const response = await fetch('http://localhost:8000/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -159,7 +80,7 @@ export async function getCurrentUserAction() {
 
   if (!token) return null;
 
-  const response = await fetch('http://localhost:8000/auth/me', {
+  const response = await fetch('http://localhost:8000/api/auth/me', {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -170,7 +91,7 @@ export async function getCurrentUserAction() {
 ### 3. Signup
 
 ```typescript
-const response = await fetch('http://localhost:8000/auth/signup', {
+const response = await fetch('http://localhost:8000/api/auth/signup', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
@@ -194,7 +115,7 @@ export async function createTaskAction(
 ) {
   const token = await getAccessToken();
 
-  const response = await fetch('http://localhost:8000/tasks', {
+  const response = await fetch('http://localhost:8000/api/tasks', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -221,7 +142,7 @@ export async function listTasksAction(status?: string) {
   if (status) query.append('status', status);
 
   const response = await fetch(
-    `http://localhost:8000/tasks?${query}`,
+    `http://localhost:8000/api/tasks?${query}`,
     {
       headers: { Authorization: `Bearer ${token}` },
     }
@@ -236,7 +157,7 @@ export async function listTasksAction(status?: string) {
 ### Create Analysis
 
 ```typescript
-const response = await fetch('http://localhost:8000/analyses', {
+const response = await fetch('http://localhost:8000/api/analyses', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${token}`,
@@ -252,7 +173,7 @@ const response = await fetch('http://localhost:8000/analyses', {
 ### Update Analysis Content
 
 ```typescript
-const response = await fetch(`http://localhost:8000/analyses/${analysisId}`, {
+const response = await fetch(`http://localhost:8000/api/analyses/${analysisId}`, {
   method: 'PUT',
   headers: {
     'Authorization': `Bearer ${token}`,
@@ -273,7 +194,7 @@ const response = await fetch(`http://localhost:8000/analyses/${analysisId}`, {
 
 ```typescript
 const response = await fetch(
-  `http://localhost:8000/analyses/${analysisId}/submit`,
+  `http://localhost:8000/api/analyses/${analysisId}/submit`,
   {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
@@ -285,7 +206,7 @@ const response = await fetch(
 
 ```typescript
 const response = await fetch(
-  `http://localhost:8000/analyses/${analysisId}/review`,
+  `http://localhost:8000/api/analyses/${analysisId}/review`,
   {
     method: 'POST',
     headers: {
@@ -367,7 +288,7 @@ export async function refreshAccessToken(): Promise<string> {
     throw new Error('No refresh token');
   }
 
-  const response = await fetch('http://localhost:8000/auth/refresh', {
+  const response = await fetch('http://localhost:8000/api/auth/refresh', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken }),
@@ -464,12 +385,12 @@ export interface Report {
 
 ```bash
 # Login
-curl -X POST http://localhost:8000/auth/login \
+curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"manager@example.com","password":"Manager123!@#"}'
+  -d '{"email":"<DEV_MANAGER_USER>","password":"<DEV_MANAGER_PASSWORD>"}'
 
 # Create task (use token from login)
-curl -X POST http://localhost:8000/tasks \
+curl -X POST http://localhost:8000/api/tasks \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{"title":"Test","description":"Test task","assignedTo":"<uuid>"}'

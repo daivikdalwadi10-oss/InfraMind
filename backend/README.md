@@ -25,7 +25,7 @@ Server runs at http://localhost:8000
 ## Architecture Highlights
 
 - **Framework**: Custom lightweight PHP 8.2+ framework
-- **Database**: SQLite by default, MySQL/PostgreSQL supported
+- **Database**: SQLite by default, optional MySQL support
 - **Authentication**: JWT-based with bcrypt password hashing
 - **Authorization**: Role-based access control (RBAC)
 - **Security**: Prepared statements, input validation, CORS, rate limiting
@@ -78,7 +78,7 @@ php bin/seed.php      # Seed test data
 
 ## Test Accounts
 
-After running `composer seed`, the database contains role-based users. Set local placeholders in backend/.env if you want to document credentials:
+After running `php bin/seed.php`, the database contains role-based users. Set local placeholders in backend/.env if you want to document credentials:
 
 - DEV_OWNER_USER / DEV_OWNER_PASSWORD
 - DEV_MANAGER_USER / DEV_MANAGER_PASSWORD
@@ -88,7 +88,7 @@ After running `composer seed`, the database contains role-based users. Set local
 
 ### Login
 ```bash
-curl -X POST http://localhost:8000/auth/login \
+curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "<DEV_MANAGER_USER>",
@@ -98,7 +98,7 @@ curl -X POST http://localhost:8000/auth/login \
 
 ### Create Analysis
 ```bash
-curl -X POST http://localhost:8000/analyses \
+curl -X POST http://localhost:8000/api/analyses \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{

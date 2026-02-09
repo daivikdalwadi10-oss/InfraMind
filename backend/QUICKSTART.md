@@ -18,51 +18,44 @@ Open in browser: **http://localhost:8000/adminer.php**
 
 ## Test Credentials
 
-```
-Email                      | Password         | Role
----------------------------|------------------|----------
-owner@example.com         | password123ABC! | Owner
-manager@example.com       | password123ABC! | Manager
-employee1@example.com     | password123ABC! | Employee
-employee2@example.com     | password123ABC! | Employee
-```
+If you run `php bin/seed.php`, demo users are created for local testing. See the seed script for current emails and passwords.
 
 ## Quick API Tests
 
 ### 1. Health Check
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:8000/api/health
 ```
 
 ### 2. Login
 ```bash
-curl -X POST http://localhost:8000/auth/login \
+curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"employee1@example.com","password":"password123ABC!"}'
+  -d '{"email":"<DEV_EMPLOYEE_USER>","password":"<DEV_EMPLOYEE_PASSWORD>"}'
 ```
 
 ### 3. Create Task (Manager)
 ```bash
-curl -X POST http://localhost:8000/tasks \
+curl -X POST http://localhost:8000/api/tasks \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer TOKEN_HERE" \
   -d '{
     "title":"New Task",
     "description":"Task description",
-    "assigned_to":"11ee2e7c-7251-46f1-a38b-5a6c9180d902"
+    "assignedTo":"11ee2e7c-7251-46f1-a38b-5a6c9180d902"
   }'
 ```
 
 ### 4. Create Analysis (Employee)
 ```bash
-curl -X POST http://localhost:8000/analyses \
+curl -X POST http://localhost:8000/api/analyses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer TOKEN_HERE" \
   -d '{
-    "task_id":"TASK_ID",
-    "symptoms":"High CPU usage",
-    "signals":"CPU at 90%",
-    "analysis_type":"performance"
+    "taskId":"TASK_ID",
+    "analysisType":"LATENCY",
+    "symptoms":["High CPU usage"],
+    "signals":["CPU at 90%"]
   }'
 ```
 
@@ -88,22 +81,20 @@ backend/
 
 ## What's Included
 
-✅ **22 REST API Endpoints**
-- 5 Auth endpoints (login, signup, refresh, etc.)
-- 5 Task endpoints (CRUD + status)
-- 7 Analysis endpoints (CRUD + submit/review)
-- 5 Report endpoints (CRUD + finalize)
+✅ **Core REST API Endpoints**
+- Auth, tasks, analyses, reports, and health routes
+- Additional resources for AI outputs, incidents, infrastructure state, risks, meetings, teams, and admin
 
 ✅ **Complete Database**
-- 11 SQLite tables (users, tasks, analyses, reports, audit logs, etc.)
-- 4 seeded test users
+- SQLite tables for core workflow plus audit/history
+- Optional seed data
 - Audit logging on all actions
 - Soft delete support
 
 ✅ **Security Features**
 - JWT authentication with access + refresh tokens
 - Role-based access control (Employee, Manager, Owner)
-- Rate limiting (10 req/min per IP)
+- Rate limiting (configurable; default 100 req/60s)
 - CORS middleware
 - Input validation on all endpoints
 
@@ -119,7 +110,7 @@ backend/
 2. **Explore DB:** Visit http://localhost:8000/adminer.php
 3. **Test API:** Use curl/Postman with test credentials
 4. **Frontend:** Connect Next.js frontend to this API
-5. **Production:** Migrate to PostgreSQL/MySQL, enable HTTPS
+5. **Production:** Migrate to MySQL if needed, enable HTTPS
 
 ## Troubleshooting
 

@@ -1,21 +1,21 @@
 # InfraMind Backend - Complete File Manifest
 
-Generated: February 2, 2024
+Generated: see git history for latest updates
 
 ## 📋 Documentation Files
 
 | File | Purpose | Size |
 |------|---------|------|
-| [START_HERE.md](./START_HERE.md) | Quick start guide (5-minute setup) | 8 KB |
-| [MIGRATION_SUMMARY.md](./MIGRATION_SUMMARY.md) | Executive summary of migration | 12 KB |
-| [BACKEND_MIGRATION_GUIDE.md](./BACKEND_MIGRATION_GUIDE.md) | Complete technical reference | 18 KB |
-| [FRONTEND_INTEGRATION.md](./FRONTEND_INTEGRATION.md) | Frontend integration guide | 12 KB |
-| [DEPLOYMENT.md](./DEPLOYMENT.md) | Production deployment guide | 16 KB |
-| [COMPLETION_CHECKLIST.md](./COMPLETION_CHECKLIST.md) | Migration completion checklist | 8 KB |
-| [README.md](./README.md) | Project overview | 2 KB |
-| [FILE_MANIFEST.md](./FILE_MANIFEST.md) | This file | 4 KB |
+| [START_HERE.md](./START_HERE.md) | Quick start guide (5-minute setup) |
+| [MIGRATION_SUMMARY.md](./MIGRATION_SUMMARY.md) | Executive summary of migration |
+| [BACKEND_MIGRATION_GUIDE.md](./BACKEND_MIGRATION_GUIDE.md) | Complete technical reference |
+| [FRONTEND_INTEGRATION.md](./FRONTEND_INTEGRATION.md) | Frontend integration guide |
+| [DEPLOYMENT.md](./DEPLOYMENT.md) | Production deployment guide |
+| [COMPLETION_CHECKLIST.md](./COMPLETION_CHECKLIST.md) | Migration completion checklist |
+| [README.md](./README.md) | Project overview |
+| [FILE_MANIFEST.md](./FILE_MANIFEST.md) | This file |
 
-**Total Documentation**: 80 KB (comprehensive)
+**Total Documentation**: See repository size
 
 ## 🔧 Core Framework Files
 
@@ -129,16 +129,13 @@ Utils/Utils.php                      Utility functions:
 
 ### Migrations
 ```
-database/migrations/001_initial_schema.sql    Complete schema (250 lines)
-                                              Tables:
-                                              - users
-                                              - tasks
-                                              - analyses
-                                              - analysis_hypotheses
-                                              - reports
-                                              - audit_logs
-                                              - analysis_status_history
-                                              - analysis_revisions
+database/migrations/001_initial_schema.sql    Complete schema
+                                              Tables include:
+                                              - users, tasks, teams, team_members
+                                              - analyses, analysis_inputs, analysis_hypotheses
+                                              - reports, ai_outputs
+                                              - incidents, infrastructure_states, architecture_risks, meetings
+                                              - audit_logs, analysis_status_history, analysis_revisions
 ```
 
 ### Seeds & Tools

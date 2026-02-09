@@ -3,7 +3,7 @@
 ## Overview
 The InfraMind backend is a PHP-based REST API built with:
 - **Language:** PHP 8.2.30
-- **Database:** SQLite (development)
+- **Database:** SQLite (default) with optional MySQL
 - **Package Manager:** Composer 2.9.5
 - **Database Admin:** Adminer
 - **Server:** PHP Built-in Development Server
@@ -43,7 +43,7 @@ APP_URL=http://localhost:8000
 composer install
 ```
 
-This installs 46 packages including:
+This installs core packages including:
 - `firebase/php-jwt` - JWT authentication
 - `monolog/monolog` - Logging
 - `vlucas/phpdotenv` - Environment variables
@@ -58,8 +58,8 @@ php setup-sqlite.php
 
 This creates:
 - Database file: `database.sqlite`
-- All required tables (8 core + 3 audit)
-- Test user accounts (4 users)
+- All required tables for analyses, reports, AI outputs, and audit history
+- Optional demo users (if seeding is enabled)
 
 **Test Credentials:**
 
@@ -76,37 +76,38 @@ php -S localhost:8000 -t public
 
 Server runs on: `http://localhost:8000`
 
-## Available Endpoints (22 Total)
+## Available Endpoints (Core)
 
 ### Authentication (5 endpoints)
-- `POST /auth/login` - User login
-- `POST /auth/signup` - User registration  
-- `GET /auth/me` - Get current user
-- `POST /auth/refresh` - Refresh access token
-- `GET /health` - System health check
+- `POST /api/auth/login` - User login
+- `POST /api/auth/signup` - User registration  
+- `GET /api/auth/me` - Get current user
+- `POST /api/auth/refresh` - Refresh access token
+- `GET /api/health` - System health check
 
 ### Tasks (5 endpoints)
-- `POST /tasks` - Create task
-- `GET /tasks` - List tasks
-- `GET /tasks/{id}` - Get task details
-- `PUT /tasks/{id}` - Update task
-- `PATCH /tasks/{id}/status` - Update task status
+- `POST /api/tasks` - Create task
+- `GET /api/tasks` - List tasks
+- `GET /api/tasks/{id}` - Get task details
+- `PUT /api/tasks/{id}/status` - Update task status
 
 ### Analyses (7 endpoints)
-- `POST /analyses` - Create analysis
-- `GET /analyses` - List analyses
-- `GET /analyses/{id}` - Get analysis details
-- `PUT /analyses/{id}` - Update analysis
-- `POST /analyses/{id}/hypotheses` - Add hypotheses
-- `POST /analyses/{id}/submit` - Submit for review
-- `POST /analyses/{id}/review` - Manager review/approve/reject
+- `POST /api/analyses` - Create analysis
+- `POST /api/analyses/manager` - Manager create assigned analysis
+- `GET /api/analyses` - List analyses
+- `GET /api/analyses/{id}` - Get analysis details
+- `PUT /api/analyses/{id}` - Update analysis
+- `POST /api/analyses/{id}/submit` - Submit for review
+- `POST /api/analyses/{id}/review` - Manager review/approve/reject
+- `POST /api/analyses/{id}/ai/hypotheses` - Generate AI hypotheses
+- `GET /api/analyses/{id}/ai/outputs` - List AI outputs
+- `POST /api/analyses/{id}/ai/report-draft` - Generate AI report draft
 
 ### Reports (5 endpoints)
-- `POST /reports` - Create report
-- `GET /reports` - List reports
-- `GET /reports/{id}` - Get report details
-- `PUT /reports/{id}` - Update report
-- `POST /reports/{id}/finalize` - Finalize report
+- `POST /api/reports` - Create report
+- `GET /api/reports` - List reports
+- `GET /api/reports/{id}` - Get report details
+- `GET /api/reports/{id}/full` - Report with analysis
 
 ## Project Structure
 
@@ -158,7 +159,6 @@ backend/
 ├── database.sqlite        # SQLite database file
 ├── composer.json          # PHP dependencies
 ├── .env                   # Environment config
-├── firestore.rules        # Security rules (reference)
 └── API.md                 # API documentation
 ```
 
@@ -170,8 +170,8 @@ Access at: `http://localhost:8000/adminer.php`
 **Quick Stats:**
 - Type: SQLite
 - File: `database.sqlite`
-- Tables: 11
-- Records: 4 users + test data
+- Tables: see migration schema
+- Records: depends on seed data
 
 ### Database Tables
 
@@ -202,10 +202,9 @@ Employee analysis submissions:
 - `id` - UUID
 - `task_id` - Associated task
 - `employee_id` - Author ID
-- `status` - DRAFT, SUBMITTED, APPROVED, REJECTED
-- `symptoms` - Observed symptoms
-- `signals` - Detected signals
-- `hypotheses` - JSON array of hypotheses
+- `status` - DRAFT, SUBMITTED, NEEDS_CHANGES, APPROVED, REPORT_GENERATED
+- `analysis_type` - LATENCY, SECURITY, OUTAGE, CAPACITY
+- `symptoms`, `signals`, `hypotheses` - JSON arrays
 - `readiness_score` - Submission readiness (0-100)
 - `manager_feedback` - Review feedback
 - `created_at`, `updated_at` - Timestamps
@@ -214,8 +213,7 @@ Employee analysis submissions:
 Manager-created reports from approved analyses:
 - `id` - UUID
 - `analysis_id` - Associated analysis
-- `executive_summary_draft` - Draft summary
-- `executive_summary_final` - Final summary
+- `summary`, `executive_summary`, `root_cause`, `impact`, `resolution`, `prevention_steps`
 - `status` - DRAFT, FINALIZED
 - `created_by` - Manager ID
 - `created_at`, `updated_at` - Timestamps
@@ -229,7 +227,7 @@ Manager-created reports from approved analyses:
 
 ### Health Check
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:8000/api/health
 ```
 
 Expected response:
@@ -245,11 +243,11 @@ Expected response:
 
 ### Login Test
 ```bash
-curl -X POST http://localhost:8000/auth/login \
+curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "employee1@example.com",
-    "password": "password123ABC!"
+    "email": "<DEV_EMPLOYEE_USER>",
+    "password": "<DEV_EMPLOYEE_PASSWORD>"
   }'
 ```
 
@@ -346,7 +344,7 @@ Press `Ctrl+C` in terminal running PHP server
 
 ### Current Capacity
 - SQLite handles ~10,000 concurrent requests in development
-- For production, migrate to PostgreSQL or MySQL
+- For production, migrate to MySQL if needed
 - Add database indexing as needed
 
 ### Optimization Tips
@@ -367,7 +365,7 @@ Press `Ctrl+C` in terminal running PHP server
 - [ ] Enable rate limiting
 - [ ] Configure CORS for production domain
 - [ ] Set up monitoring/alerting
-- [ ] Migrate from SQLite to PostgreSQL
+- [ ] Migrate from SQLite to MySQL (if needed)
 - [ ] Set up CI/CD pipeline
 - [ ] Create user documentation
 

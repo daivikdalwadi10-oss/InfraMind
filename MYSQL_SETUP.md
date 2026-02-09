@@ -2,7 +2,7 @@
 
 ## Current Status
 ✅ System is configured to work with **both SQLite and MySQL**
-✅ Database manager available at: http://localhost:8000/db-manager.php (password: `admin123`)
+✅ Adminer available at: http://localhost:8000/adminer.php (SQLite) or phpMyAdmin (MySQL)
 
 ## Option 1: Use SQLite (Current - No Installation Required)
 The system is currently working with SQLite. No additional setup needed.
@@ -72,18 +72,9 @@ php bin/seed.php
 5. Run: `php -S localhost:8080 -t C:\phpmyadmin`
 6. Access: http://localhost:8080
 
-## Built-in Database Manager
+## Admin Access (Optional)
 
-InfraMind includes a custom database manager that works with both SQLite and MySQL:
-
-**URL**: http://localhost:8000/db-manager.php
-**Password**: `admin123`
-
-Features:
-- View all tables
-- Browse table data
-- Row counts
-- Works with current database (SQLite or MySQL)
+For MySQL, use phpMyAdmin or your preferred DB admin tool. For SQLite, use Adminer at `http://localhost:8000/adminer.php`.
 
 ## Verify Migration
 
@@ -92,7 +83,7 @@ Features:
 curl http://localhost:8000/api/health
 
 # Test login
-$json = '{"email":"manager@example.com","password":"Manager123!@#"}'
+$json = '{"email":"<DEV_MANAGER_USER>","password":"<DEV_MANAGER_PASSWORD>"}'
 $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
 $tempFile = New-TemporaryFile
 [System.IO.File]::WriteAllBytes($tempFile.FullName, $bytes)
@@ -126,4 +117,4 @@ The MySQL schema includes:
 - **Foreign keys with CASCADE** for referential integrity
 - **Proper indexes** for performance
 
-File: `backend/database/migrations/002_mysql_schema.sql`
+File: `backend/database/migrations/002_mysql_schema.mysql.sql`

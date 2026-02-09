@@ -7,7 +7,7 @@ Welcome to the new PHP backend! This guide will get you started in under 5 minut
 The InfraMind backend has been completely migrated from Firebase to a professional PHP backend with:
 
 - ✅ Secure JWT authentication
-- ✅ MySQL/PostgreSQL relational database
+- ✅ SQLite database (default) with optional MySQL support
 - ✅ Complete audit trail & compliance logging
 - ✅ Enterprise-grade security (OWASP Top 10)
 - ✅ Strict analysis workflow enforcement
@@ -28,13 +28,7 @@ cp .env.example .env
 ```
 
 ### 3. Create Database
-```bash
-# MySQL
-mysql -u root -p -e "CREATE DATABASE inframind CHARACTER SET utf8mb4;"
-
-# PostgreSQL
-psql -U postgres -c "CREATE DATABASE inframind;"
-```
+SQLite is used by default, so no server setup is required. If you want MySQL, create the database before running migrations.
 
 ### 4. Run Migrations
 ```bash
@@ -54,7 +48,7 @@ composer start
 
 ### 7. Test It
 ```bash
-curl http://localhost:8000/health
+curl http://localhost:8000/api/health
 # Should return: {"success": true, "data": {"status": "healthy"}}
 ```
 
@@ -139,7 +133,7 @@ The entire backend is built with security in mind:
 
 ### Login
 ```bash
-curl -X POST http://localhost:8000/auth/login \
+curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "<DEV_MANAGER_USER>",
@@ -161,7 +155,7 @@ Response:
 
 ### Create Task (with token)
 ```bash
-curl -X POST http://localhost:8000/tasks \
+curl -X POST http://localhost:8000/api/tasks \
   -H "Authorization: Bearer <accessToken>" \
   -H "Content-Type: application/json" \
   -d '{
@@ -200,7 +194,7 @@ See [BACKEND_MIGRATION_GUIDE.md#analysis-workflow](./BACKEND_MIGRATION_GUIDE.md#
 Error: Failed to connect to database
 ```
 ✅ Check `.env` database credentials  
-✅ Verify MySQL/PostgreSQL is running  
+✅ If using MySQL, verify the server is running  
 ✅ Ensure database exists: `CREATE DATABASE inframind`
 
 ### JWT Token Invalid
@@ -259,7 +253,7 @@ See [BACKEND_MIGRATION_GUIDE.md#troubleshooting](./BACKEND_MIGRATION_GUIDE.md#tr
 | **Workflow** | State machine with validation |
 | **Audit** | Complete change tracking |
 | **Security** | Bcrypt, prepared statements, rate limiting |
-| **Database** | MySQL 8.0+ / PostgreSQL 14+ |
+| **Database** | SQLite (default) / MySQL 8.0+ |
 | **API** | RESTful with consistent JSON responses |
 | **Monitoring** | Health checks, structured logging |
 | **Scaling** | Stateless, horizontally scalable |
@@ -268,7 +262,7 @@ See [BACKEND_MIGRATION_GUIDE.md#troubleshooting](./BACKEND_MIGRATION_GUIDE.md#tr
 ## 📊 Tech Stack
 
 - **Language**: PHP 8.2+
-- **Database**: MySQL 8.0+ / PostgreSQL 14+
+- **Database**: SQLite (default) / MySQL 8.0+
 - **Auth**: JWT (HS256)
 - **Logging**: Monolog
 - **Dependencies**: Minimal and well-curated

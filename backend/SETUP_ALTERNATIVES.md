@@ -24,7 +24,7 @@ php -S localhost:8000 -t public
 
 ### Access
 - API: http://localhost:8000
-- Database: localhost:3306 (root / no password)
+- Database: SQLite by default (database.sqlite)
 
 ## Option 2: XAMPP
 
@@ -61,7 +61,7 @@ choco install php --version=8.2.0
 # Download and install from https://getcomposer.org/Composer-Setup.exe
 ```
 
-### Install MySQL
+### Optional MySQL
 ```powershell
 # Using Chocolatey
 choco install mysql
@@ -91,14 +91,12 @@ wsl --set-default-version 2
 # Then start Docker Desktop again
 ```
 
-## Test Accounts (After Setup)
-- **Owner**: owner@example.com / password123ABC!
-- **Manager**: manager@example.com / password123ABC!
-- **Employee**: employee1@example.com / password123ABC!
+## Seeded Accounts (Optional)
+If you run `php bin/seed.php`, demo users are created for local testing. See the seed script for current emails and passwords.
 
 ## Health Check
 ```powershell
-curl http://localhost:8000/health
+curl http://localhost:8000/api/health
 ```
 
 ## Next Steps

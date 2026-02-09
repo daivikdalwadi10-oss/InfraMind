@@ -116,9 +116,6 @@ export async function managerReviewAnalysis(analysisId: string, action: 'APPROVE
 ## Failure modes & debugging tips 🐞
 - Genkit failures: `src/ai/genkit.ts` returns `success: false` with `error`. Surface meaningful errors to logs and do not commit partial AI outputs to DB.
 - Parsing errors: AI sometimes returns non-JSON; flows currently wrap parse in try/catch and throw `Failed to parse Genkit output...` — add richer logging when needed.
-- Auth/role issues: verify custom claims or `users` collection data (used by `hasRole()` in rules) and `adminFirestore` contents.
-.
-- Parsing errors: AI sometimes returns non-JSON; flows currently wrap parse in try/catch and throw `Failed to parse Genkit output...` — add richer logging when needed.
 - Auth/role issues: verify session cookies and backend user data in SQLite database.
 - API errors: Check PHP backend logs in `backend/logs/` directory.
 - Database issues: Verify SQLite database exists at `backend/database.sqlite`

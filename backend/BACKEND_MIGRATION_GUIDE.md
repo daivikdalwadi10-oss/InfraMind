@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a complete backend migration from Firebase + Next.js to a PHP 8.2+ backend with MySQL/PostgreSQL. The system provides secure authentication, workflow enforcement, and enterprise-grade auditing.
+This is a complete backend migration from Firebase + Next.js to a PHP 8.2+ REST API backed by SQLite by default, with optional MySQL support. The system provides secure authentication, workflow enforcement, and enterprise-grade auditing.
 
 ## Architecture
 
@@ -62,8 +62,8 @@ backend/
 ### 1. Prerequisites
 
 - PHP 8.2 or higher
-- MySQL 8.0+ or PostgreSQL 14+
 - Composer
+- SQLite (bundled with PHP) or MySQL 8.0+ (optional)
 
 ### 2. Installation
 
@@ -94,13 +94,17 @@ composer start
 Edit `.env`:
 
 ```env
-# Database
-DB_DRIVER=mysql
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=inframind
-DB_USER=root
-DB_PASSWORD=
+# Database (SQLite default)
+DB_DRIVER=sqlite
+DB_PATH=database.sqlite
+
+# Optional MySQL
+# DB_DRIVER=mysql
+# DB_HOST=localhost
+# DB_PORT=3306
+# DB_NAME=inframind
+# DB_USER=root
+# DB_PASSWORD=
 
 # JWT (change in production!)
 JWT_SECRET=your-secret-key-change-in-production
@@ -111,49 +115,53 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:8000
 
 ## API Endpoints
 
-### Authentication
+### Authentication (core)
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | /auth/signup | Register new user | No |
-| POST | /auth/login | Login user | No |
-| POST | /auth/refresh | Refresh access token | No |
-| GET | /auth/me | Get current user | Yes |
+| POST | /api/auth/signup | Register new user | No |
+| POST | /api/auth/login | Login user | No |
+| POST | /api/auth/refresh | Refresh access token | No |
+| GET | /api/auth/me | Get current user | Yes |
 
-### Tasks
-
-| Method | Endpoint | Description | Auth | Role |
-|--------|----------|-------------|------|------|
-| POST | /tasks | Create task | Yes | MANAGER |
-| GET | /tasks | List tasks | Yes | MANAGER, EMPLOYEE |
-| GET | /tasks/:id | Get task | Yes | MANAGER, EMPLOYEE |
-| PUT | /tasks/:id/status | Update status | Yes | MANAGER |
-
-### Analyses
+### Tasks (core)
 
 | Method | Endpoint | Description | Auth | Role |
 |--------|----------|-------------|------|------|
-| POST | /analyses | Create analysis | Yes | EMPLOYEE |
-| GET | /analyses | List analyses | Yes | EMPLOYEE, MANAGER |
-| GET | /analyses/:id | Get analysis | Yes | EMPLOYEE, MANAGER |
-| PUT | /analyses/:id | Update content | Yes | EMPLOYEE |
-| POST | /analyses/:id/submit | Submit analysis | Yes | EMPLOYEE |
-| POST | /analyses/:id/review | Review analysis | Yes | MANAGER |
+| POST | /api/tasks | Create task | Yes | MANAGER |
+| GET | /api/tasks | List tasks | Yes | MANAGER, EMPLOYEE |
+| GET | /api/tasks/:id | Get task | Yes | MANAGER, EMPLOYEE |
+| PUT | /api/tasks/:id/status | Update status | Yes | MANAGER |
 
-### Reports
+### Analyses (core)
 
 | Method | Endpoint | Description | Auth | Role |
 |--------|----------|-------------|------|------|
-| POST | /reports | Create report | Yes | MANAGER |
-| GET | /reports | List reports | Yes | MANAGER, OWNER |
-| GET | /reports/:id | Get report | Yes | MANAGER, OWNER |
-| GET | /reports/:id/full | Full report | Yes | MANAGER, OWNER |
+| POST | /api/analyses | Create analysis | Yes | EMPLOYEE |
+| POST | /api/analyses/manager | Create assigned analysis | Yes | MANAGER |
+| GET | /api/analyses | List analyses | Yes | EMPLOYEE, MANAGER |
+| GET | /api/analyses/:id | Get analysis | Yes | EMPLOYEE, MANAGER |
+| PUT | /api/analyses/:id | Update content | Yes | EMPLOYEE |
+| POST | /api/analyses/:id/submit | Submit analysis | Yes | EMPLOYEE |
+| POST | /api/analyses/:id/review | Review analysis | Yes | MANAGER |
+| POST | /api/analyses/:id/ai/hypotheses | Generate AI hypotheses | Yes | EMPLOYEE, MANAGER |
+| GET | /api/analyses/:id/ai/outputs | List AI outputs | Yes | EMPLOYEE, MANAGER |
+| POST | /api/analyses/:id/ai/report-draft | Generate AI report draft | Yes | EMPLOYEE, MANAGER |
+
+### Reports (core)
+
+| Method | Endpoint | Description | Auth | Role |
+|--------|----------|-------------|------|------|
+| POST | /api/reports | Create report | Yes | MANAGER |
+| GET | /api/reports | List reports | Yes | MANAGER, OWNER |
+| GET | /api/reports/:id | Get report | Yes | MANAGER, OWNER |
+| GET | /api/reports/:id/full | Full report | Yes | MANAGER, OWNER |
 
 ## Authentication Flow
 
 ### Signup
 ```bash
-POST /auth/signup
+POST /api/auth/signup
 {
   "email": "user@example.com",
   "password": "SecurePass123!@#",
@@ -178,7 +186,7 @@ Response:
 
 ### Login
 ```bash
-POST /auth/login
+POST /api/auth/login
 {
   "email": "user@example.com",
   "password": "SecurePass123!@#"
@@ -370,7 +378,7 @@ All application events are logged to `logs/app.log` with:
 
 ### Database Connection Failed
 - Verify `.env` credentials
-- Check MySQL/PostgreSQL is running
+- If using MySQL, check the server is running
 - Ensure database exists
 
 ### JWT Token Invalid

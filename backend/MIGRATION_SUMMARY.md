@@ -14,8 +14,9 @@ The InfraMind platform has been successfully migrated from a Firebase-based back
 - Server-side role validation on every request
 
 ### 2. **Relational Database** ✅
-- MySQL 8.0+ / PostgreSQL 14+ support
-- Normalized schema with 10 core tables
+- SQLite default for local development
+- Optional MySQL 8.0+ support
+- Normalized schema with core workflow and audit tables
 - UUID primary keys throughout
 - Proper foreign key relationships
 - Indices optimized for query performance
@@ -56,7 +57,7 @@ The InfraMind platform has been successfully migrated from a Firebase-based back
 
 ### Technology Stack
 - **Language**: PHP 8.2+
-- **Database**: MySQL 8.0+ or PostgreSQL 14+
+- **Database**: SQLite (default) or MySQL 8.0+ (optional)
 - **Authentication**: JWT tokens
 - **Password Hashing**: Bcrypt
 - **Logging**: Monolog (structured logging)
@@ -89,14 +90,10 @@ src/
 
 ## API Endpoints
 
-**8 Authentication Endpoints**
-- Signup, Login, Refresh, Current User
-
-**13 Resource Endpoints**
-- 4 Task management
-- 6 Analysis workflow
-- 4 Report management
-- 1 Health check
+**Core Auth/Workflow Endpoints**
+- Authentication, tasks, analyses, reports, health
+- All endpoints are routed under `/api/*`
+- Additional resources include AI outputs, incidents, infrastructure state, risks, meetings, teams, and admin tools
 
 All endpoints are:
 - ✅ RESTful
@@ -107,16 +104,16 @@ All endpoints are:
 
 ## Database Schema
 
-**10 Core Tables**:
-1. `users` - User accounts with roles
-2. `tasks` - Work assignments
-3. `analyses` - Analysis documents
-4. `analysis_hypotheses` - Normalized hypotheses
-5. `reports` - Finalized reports
-6. `audit_logs` - Complete audit trail
-7. `analysis_status_history` - State transitions
-8. `analysis_revisions` - Version history
-9. Application metadata (ready for more tables)
+**Core Tables include**:
+- `users` - User accounts with roles
+- `tasks` - Work assignments
+- `analyses` - Analysis documents
+- `analysis_hypotheses` - Normalized hypotheses
+- `reports` - Finalized reports
+- `audit_logs` - Complete audit trail
+- `analysis_status_history` - State transitions
+- `analysis_revisions` - Version history
+- Supporting resources for teams, AI outputs, incidents, infrastructure state, risks, and meetings
 
 **Key Features**:
 - Timestamps on all tables
@@ -124,7 +121,7 @@ All endpoints are:
 - JSON fields for complex data
 - Proper indexing
 - Foreign key constraints
-- Collation: utf8mb4_unicode_ci
+- Collation: depends on database engine
 
 ## Security Highlights
 
@@ -162,7 +159,7 @@ All endpoints are:
 | Component | Before (Firebase) | After (PHP) |
 |-----------|-------------------|-----------|
 | Auth | Firebase Auth | JWT tokens |
-| Database | Firestore | MySQL/PostgreSQL |
+| Database | Firestore | SQLite (default) / MySQL (optional) |
 | Password | Managed by Firebase | Bcrypt |
 | Sessions | Firebase tokens | JWT + refresh |
 | Permissions | Firestore rules | Server-side RBAC |
@@ -195,7 +192,7 @@ All endpoints are:
 ## Monitoring & Operations
 
 ### Available Monitoring
-- Health check endpoint (`/health`)
+- Health check endpoint (`/api/health`)
 - Structured logging to files
 - Error tracking in logs
 - Request/response logging
@@ -240,7 +237,7 @@ All endpoints are:
 
 ### Deployment Requirements
 - PHP 8.2+ with PDO extension
-- MySQL 8.0+ or PostgreSQL 14+
+- SQLite (default) or MySQL 8.0+ (optional)
 - Composer for dependencies
 - Nginx or Apache web server
 - HTTPS with valid SSL certificate
@@ -309,7 +306,7 @@ All endpoints are:
 
 2. Test the API
    ```bash
-   curl http://localhost:8000/health
+   curl http://localhost:8000/api/health
    ```
 
 3. Review the code in `src/`

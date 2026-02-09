@@ -6,7 +6,7 @@ InfraMind is a production-ready incident analysis platform with strict IAM, work
 
 - **Frontend**: Next.js 16 (App Router) + TypeScript + Tailwind + shadcn/ui
 - **Backend**: PHP 8.2+ REST API (MVC, service layer, repository pattern)
-- **Database**: SQLite by default, with MySQL/PostgreSQL support
+- **Database**: SQLite by default, with optional MySQL support
 - **Auth**: JWT-based sessions and role enforcement (server-side)
 - **AI**: Genkit flows calling Gemini 2.5 Flash (server-side only)
 
@@ -14,7 +14,7 @@ InfraMind is a production-ready incident analysis platform with strict IAM, work
 
 - Next.js, React 18, TypeScript, Tailwind CSS, shadcn/ui
 - PHP 8.2+, Composer, PDO
-- SQLite (default), MySQL/PostgreSQL (optional)
+- SQLite (default), MySQL (optional)
 - Genkit + Gemini for structured AI output
 
 ## Project Structure
@@ -115,7 +115,7 @@ npm run dev
 - Set `APP_ENV=production` and `APP_DEBUG=false`
 - Provide a secure `JWT_SECRET` (64+ characters)
 - Configure CORS for production origins
-- Use MySQL/PostgreSQL for production workloads
+- Use MySQL for production workloads
 - Enable HTTPS and centralized logging
 
 ## Documentation
@@ -142,4 +142,4 @@ InfraMind was originally built for a rapid delivery context and has been hardene
 ---
 
 **Status**: ✅ Complete - IAM enforced, state machine validated, audit compliant
-**Updated**: 2026-02-07
+**Updated**: see git history

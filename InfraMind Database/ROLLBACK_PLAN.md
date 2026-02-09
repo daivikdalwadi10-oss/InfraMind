@@ -1,5 +1,7 @@
 # InfraMind SQL Server Rollback Plan
 
+This plan applies to the SQL Server project under `InfraMind Database/` and is not used for the default SQLite backend.
+
 ## Goals
 - Preserve data before schema changes.
 - Enable quick rollback if deployment issues occur.

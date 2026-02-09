@@ -41,34 +41,41 @@
 
 ### API Endpoints (100%)
 
-**Authentication (4 endpoints)**
-- [x] POST /auth/signup
-- [x] POST /auth/login
-- [x] POST /auth/refresh
-- [x] GET /auth/me
+**Authentication (core endpoints)**
+- [x] POST /api/auth/signup
+- [x] POST /api/auth/login
+- [x] POST /api/auth/refresh
+- [x] GET /api/auth/me
 
-**Tasks (4 endpoints)**
-- [x] POST /tasks (create)
-- [x] GET /tasks (list)
-- [x] GET /tasks/:id (get)
-- [x] PUT /tasks/:id/status (update status)
+**Tasks (core endpoints)**
+- [x] POST /api/tasks (create)
+- [x] GET /api/tasks (list)
+- [x] GET /api/tasks/:id (get)
+- [x] PUT /api/tasks/:id/status (update status)
 
-**Analyses (6 endpoints)**
-- [x] POST /analyses (create)
-- [x] GET /analyses (list)
-- [x] GET /analyses/:id (get)
-- [x] PUT /analyses/:id (update content)
-- [x] POST /analyses/:id/submit (submit)
-- [x] POST /analyses/:id/review (manager review)
+**Analyses (core endpoints)**
+- [x] POST /api/analyses (create)
+- [x] POST /api/analyses/manager (manager create)
+- [x] GET /api/analyses (list)
+- [x] GET /api/analyses/:id (get)
+- [x] PUT /api/analyses/:id (update content)
+- [x] POST /api/analyses/:id/submit (submit)
+- [x] POST /api/analyses/:id/review (manager review)
+- [x] POST /api/analyses/:id/ai/hypotheses (AI hypotheses)
+- [x] GET /api/analyses/:id/ai/outputs (AI outputs)
+- [x] POST /api/analyses/:id/ai/report-draft (AI report draft)
 
-**Reports (4 endpoints)**
-- [x] POST /reports (create)
-- [x] GET /reports (list)
-- [x] GET /reports/:id (get)
-- [x] GET /reports/:id/full (get with analysis)
+**Reports (core endpoints)**
+- [x] POST /api/reports (create)
+- [x] GET /api/reports (list)
+- [x] GET /api/reports/:id (get)
+- [x] GET /api/reports/:id/full (get with analysis)
 
 **Health (1 endpoint)**
-- [x] GET /health (service health check)
+- [x] GET /api/health (service health check)
+
+**Additional Resources**
+- [x] Incidents, infrastructure state, risks, meetings, teams, admin tools (see `public/index.php` for full routing)
 
 ### Workflow & State Machine (100%)
 - [x] Analysis creation (DRAFT)
@@ -293,7 +300,7 @@ Test structure in place:
 
 From Firebase to PHP:
 - [x] Auth: Firebase → JWT
-- [x] Database: Firestore → MySQL/PostgreSQL
+- [x] Database: Firestore → SQLite (default) / MySQL (optional)
 - [x] Passwords: Managed → Bcrypt
 - [x] Permissions: Firestore rules → PHP RBAC
 - [x] Sessions: Firebase tokens → JWT + refresh

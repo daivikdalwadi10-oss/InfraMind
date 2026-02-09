@@ -1,7 +1,7 @@
 # InfraMind API Documentation
 
 ## Base URL
-`http://localhost:8000`
+`http://localhost:8000/api`
 
 ## Authentication
 All protected endpoints require JWT token in the `Authorization` header:
@@ -18,8 +18,8 @@ Authorization: Bearer <accessToken>
 - **Body:**
   ```json
   {
-    "email": "employee1@example.com",
-    "password": "password123ABC!"
+    "email": "<DEV_EMPLOYEE_USER>",
+    "password": "<DEV_EMPLOYEE_PASSWORD>"
   }
   ```
 - **Response:** `{ success: true, data: { accessToken, refreshToken, user } }`
@@ -68,7 +68,7 @@ Authorization: Bearer <accessToken>
   {
     "title": "Task Title",
     "description": "Task Description",
-    "assigned_to": "user-id"
+    "assignedTo": "user-id"
   }
   ```
 - **Response:** `{ success: true, data: { id, title, description, ... } }`
@@ -76,7 +76,7 @@ Authorization: Bearer <accessToken>
 #### List Tasks
 - **GET** `/tasks`
 - **Headers:** Requires Bearer token
-- **Query Params:** `?status=OPEN&assigned_to=user-id&created_by=user-id`
+- **Query Params:** `?status=OPEN&limit=50&offset=0`
 - **Response:** `{ success: true, data: [ { tasks } ] }`
 
 #### Get Task
@@ -84,14 +84,8 @@ Authorization: Bearer <accessToken>
 - **Headers:** Requires Bearer token
 - **Response:** `{ success: true, data: { task details } }`
 
-#### Update Task
-- **PUT** `/tasks/{id}`
-- **Headers:** Requires Bearer token (Manager role)
-- **Body:** Any task fields to update
-- **Response:** `{ success: true, data: { updated task } }`
-
 #### Update Task Status
-- **PATCH** `/tasks/{id}/status`
+- **PUT** `/tasks/{id}/status`
 - **Headers:** Requires Bearer token (Manager role)
 - **Body:** `{ "status": "COMPLETED" }`
 - **Response:** `{ success: true, data: { updated task } }`
@@ -104,10 +98,8 @@ Authorization: Bearer <accessToken>
 - **Body:**
   ```json
   {
-    "task_id": "task-id",
-    "symptoms": "Description of symptoms",
-    "signals": "Observed signals",
-    "analysis_type": "performance"
+    "taskId": "task-id",
+    "analysisType": "LATENCY"
   }
   ```
 - **Response:** `{ success: true, data: { id, task_id, status: "DRAFT", ... } }`
@@ -120,7 +112,7 @@ Authorization: Bearer <accessToken>
 #### List Analyses
 - **GET** `/analyses`
 - **Headers:** Requires Bearer token
-- **Query Params:** `?status=DRAFT&employee_id=user-id`
+- **Query Params:** `?status=DRAFT&limit=50&offset=0`
 - **Response:** `{ success: true, data: [ { analyses } ] }`
 
 #### Update Analysis
@@ -129,33 +121,16 @@ Authorization: Bearer <accessToken>
 - **Body:**
   ```json
   {
-    "symptoms": "Updated symptoms",
-    "signals": "Updated signals"
+    "symptoms": ["Updated symptoms"],
+    "signals": ["Updated signals"],
+    "readinessScore": 80
   }
   ```
 - **Response:** `{ success: true, data: { updated analysis } }`
 
-#### Add Hypotheses
-- **POST** `/analyses/{id}/hypotheses`
-- **Headers:** Requires Bearer token (Employee, author)
-- **Body:**
-  ```json
-  {
-    "hypotheses": [
-      {
-        "text": "Hypothesis text",
-        "confidence": 80,
-        "evidence": ["evidence 1", "evidence 2"]
-      }
-    ]
-  }
-  ```
-- **Response:** `{ success: true, data: { updated analysis } }`
-
-#### Submit Analysis
 - **POST** `/analyses/{id}/submit`
 - **Headers:** Requires Bearer token (Employee, author)
-- **Body:** `{ "readiness_score": 85 }`
+- **Body:** `{ "readinessScore": 85 }`
 - **Response:** `{ success: true, data: { analysis with status: "SUBMITTED" } }`
 
 #### Manager Review Analysis
@@ -164,7 +139,7 @@ Authorization: Bearer <accessToken>
 - **Body:**
   ```json
   {
-    "action": "approve" | "reject",
+    "decision": "APPROVE" | "REJECT",
     "feedback": "Detailed feedback"
   }
   ```
@@ -178,8 +153,12 @@ Authorization: Bearer <accessToken>
 - **Body:**
   ```json
   {
-    "analysis_id": "analysis-id",
-    "executive_summary": "Summary text"
+    "analysisId": "analysis-id",
+    "executiveSummary": "Summary text",
+    "rootCause": "Root cause",
+    "impact": "Impact",
+    "resolution": "Resolution",
+    "preventionSteps": "Prevention steps"
   }
   ```
 - **Response:** `{ success: true, data: { id, analysis_id, status: "DRAFT", ... } }`
@@ -195,30 +174,12 @@ Authorization: Bearer <accessToken>
 - **Query Params:** `?status=FINALIZED&analysis_id=id`
 - **Response:** `{ success: true, data: [ { reports } ] }`
 
-#### Update Report
-- **PUT** `/reports/{id}`
-- **Headers:** Requires Bearer token (Manager role)
-- **Body:**
-  ```json
-  {
-    "executive_summary": "Updated summary"
-  }
-  ```
-- **Response:** `{ success: true, data: { updated report } }`
-
-#### Finalize Report
-- **POST** `/reports/{id}/finalize`
-- **Headers:** Requires Bearer token (Manager role)
-- **Response:** `{ success: true, data: { report with status: "FINALIZED" } }`
+#### Report With Analysis
+- **GET** `/reports/{id}/full`
 
 ## Test Credentials
 
-```
-Owner:     owner@example.com / password123ABC!
-Manager:   manager@example.com / password123ABC!
-Employee1: employee1@example.com / password123ABC!
-Employee2: employee2@example.com / password123ABC!
-```
+If you run `php bin/seed.php`, demo users are created for local testing. See the seed script for current emails and passwords.
 
 ## Access Control
 
